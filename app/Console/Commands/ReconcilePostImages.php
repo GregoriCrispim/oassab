@@ -3,13 +3,14 @@
 namespace App\Console\Commands;
 
 use App\Models\Post;
-use App\Services\ContentCache;
 use App\Services\PostImageStorage;
-use App\Services\PublicStoragePublisher;
 use Illuminate\Console\Command;
 
 /**
- * Alinha image, image_filename e image_meta com os arquivos reais no disco.
+ * Alinha image e image_meta de cada post com os arquivos reais em storage/app/public.
+ * Remove referências quebradas (404) quando o arquivo não existe no disco.
+ *
+ * Uso: php artisan posts:reconcile-images
  */
 class ReconcilePostImages extends Command
 {
@@ -22,36 +23,38 @@ class ReconcilePostImages extends Command
         $fixed = 0;
         $cleared = 0;
 
-        PublicStoragePublisher::publish();
-
         Post::query()
+            ->where(fn ($q) => $q->whereNotNull('image')->orWhereNotNull('image_meta'))
             ->orderBy('id')
             ->each(function (Post $post) use (&$fixed, &$cleared) {
-                PostImageStorage::relocateLegacyFiles($post->slug);
-
                 $beforeImage = $post->image;
-                PostImageStorage::applyRecord($post);
+                $url = PostImageStorage::resolveDisplayUrl($post->slug, $post->image, $post->image_meta);
 
-                if (! $post->image) {
-                    if ($beforeImage || $post->image_meta || $post->image_filename) {
+                if (! $url) {
+                    if ($beforeImage || $post->image_meta) {
+                        $post->image = null;
+                        $post->image_meta = null;
                         $post->save();
                         $cleared++;
-                        $this->line("  limpo: {$post->slug}");
+                        $this->line("  limpo: {$post->slug} (arquivo ausente)");
                     }
 
                     return;
                 }
 
-                if ($post->isDirty()) {
+                $meta = PostImageStorage::metaFromDisk($post->slug)
+                    ?? (is_array($post->image_meta) ? $post->image_meta : []);
+
+                if ($post->image !== $url || $post->image_meta !== $meta) {
+                    $post->image = $url;
+                    $post->image_meta = $meta;
                     $post->save();
                     $fixed++;
-                    $this->line("  ok: {$post->slug} → {$post->image_filename}");
+                    $this->line("  ok: {$post->slug} → {$url}");
                 }
             });
 
-        ContentCache::flushAll();
-
-        $this->info("Concluído: {$fixed} atualizado(s), {$cleared} referência(s) removida(s). Cache HTML limpo.");
+        $this->info("Concluído: {$fixed} atualizado(s), {$cleared} referência(s) removida(s).");
 
         return self::SUCCESS;
     }

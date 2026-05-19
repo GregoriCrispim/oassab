@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreTransparencyDocumentRequest;
 use App\Models\TransparencyDocument;
-use App\Services\PublicStoragePublisher;
 use App\Support\UploadedFileHelper;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -55,7 +54,6 @@ class TransparencyDocumentController extends Controller
         }
 
         $document->save();
-        PublicStoragePublisher::publish();
 
         return redirect()
             ->route('admin.transparency-documents.index')
@@ -82,7 +80,6 @@ class TransparencyDocumentController extends Controller
         }
 
         $transparency_document->save();
-        PublicStoragePublisher::publish();
 
         return redirect()
             ->route('admin.transparency-documents.index')
@@ -93,7 +90,6 @@ class TransparencyDocumentController extends Controller
     {
         $this->purgePdf($transparency_document);
         $transparency_document->delete();
-        PublicStoragePublisher::publish();
 
         return redirect()
             ->route('admin.transparency-documents.index')
