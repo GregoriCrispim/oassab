@@ -26,7 +26,9 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ./
+          # cPanel / Hostgator: a conta FTP abre na HOME do usuário; o site fica em public_html.
+          # Com "./" os arquivos iam para /home/.../ e o public_html continuava só com projeto antigo.
+          server-dir: public_html/
           protocol: ftps
           port: 21
           timeout: 120000
