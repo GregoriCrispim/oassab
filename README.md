@@ -266,11 +266,13 @@ php artisan images:optimize
    - `APP_DEBUG=false`
    - `CACHE_STORE=file` e `SESSION_DRIVER=file` (HostGator não tem Redis; o driver `database` deixa o site lento porque toda request vai ao MySQL remoto).
 4. **Arquivos públicos (local = servidor):** tudo fica em `storage/app/public/`; a URL no site é sempre `/storage/...` (mesmo caminho relativo). O admin já roda `storage:publish` após cada upload; o deploy FTP copia o mesmo espelho para `public/storage/`. **Não use** `php artisan storage:link`.
-5. Se no servidor existirem arquivos antigos fora de `posts/{slug}/`:
+5. **Após cada deploy** (obrigatório se imagens não aparecerem — o site cacheia HTML):
    ```bash
-   php artisan posts:normalize-storage
    php artisan posts:reconcile-images
+   php artisan storage:publish
+   php artisan site:clear-cache
    ```
+   Se no servidor existirem arquivos antigos fora de `posts/{slug}/`, rode antes: `php artisan posts:normalize-storage`
 6. **Arquivos enviados pelo admin** (commit + push antes do deploy):
    | Tipo | Pasta no Git |
    |------|----------------|

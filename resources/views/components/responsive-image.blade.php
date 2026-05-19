@@ -36,6 +36,7 @@
              loading="{{ $loading }}"
              decoding="async"
              fetchpriority="{{ $fetchAttr }}"
+             onerror="this.onerror=null;this.src='{{ $fallback }}';"
              class="{{ $class }}">
     </picture>
 @else
@@ -46,5 +47,6 @@
          loading="{{ $loading }}"
          decoding="async"
          fetchpriority="{{ $fetchAttr }}"
+         onerror="this.onerror=null;this.src='{{ $fallback }}';"
          class="{{ $class }}">
 @endif

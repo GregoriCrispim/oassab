@@ -84,7 +84,8 @@ class PostImageStorage
         $folder = self::folder($slug);
         $meta = is_array($meta) ? $meta : [];
         $defaultExt = $meta['ext_default'] ?? 'jpg';
-        $widths = ! empty($meta['widths']) ? $meta['widths'] : self::scanVariantWidths($folder, $slug);
+        // Só variantes que existem no disco (ignora meta desatualizado do banco).
+        $widths = self::scanVariantWidths($folder, $slug);
 
         if ($widths !== []) {
             $defaultW = $widths[(int) floor(count($widths) / 2)] ?? end($widths);
@@ -140,11 +141,11 @@ class PostImageStorage
             ];
         }
 
-        $meta = is_array($meta) ? $meta : [];
         $folder = self::folder($slug);
+        $meta = is_array($meta) ? $meta : [];
         $defaultExt = $meta['ext_default'] ?? 'jpg';
-        $widths = ! empty($meta['widths']) ? $meta['widths'] : self::scanVariantWidths($folder, $slug);
-        $base = $meta['base'] ?? '/storage/'.$folder.'/'.$slug;
+        $widths = self::scanVariantWidths($folder, $slug);
+        $base = '/storage/'.$folder.'/'.$slug;
 
         if ($widths === []) {
             return [

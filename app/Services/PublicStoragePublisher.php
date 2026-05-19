@@ -20,6 +20,8 @@ class PublicStoragePublisher
         self::removeTarget($target);
         mkdir($target, 0755, true);
         self::copyDirectory($source, $target);
+
+        ContentCache::flushAll();
     }
 
     private static function removeTarget(string $target): void

@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Post;
+use App\Services\ContentCache;
 use App\Services\PostImageStorage;
 use App\Services\PublicStoragePublisher;
 use Illuminate\Console\Command;
@@ -56,8 +57,9 @@ class ReconcilePostImages extends Command
             });
 
         PublicStoragePublisher::publish();
+        ContentCache::flushAll();
 
-        $this->info("Concluído: {$fixed} atualizado(s), {$cleared} referência(s) removida(s). public/storage republicado.");
+        $this->info("Concluído: {$fixed} atualizado(s), {$cleared} referência(s) removida(s). Cache HTML limpo.");
 
         return self::SUCCESS;
     }
