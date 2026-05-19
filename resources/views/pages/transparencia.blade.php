@@ -28,11 +28,18 @@
 
     <section class="bg-oassab-cream">
         <div class="container-oassab py-16 md:py-20">
-            <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                @foreach ($posts as $post)
-                    <x-post-card :post="$post" />
-                @endforeach
-            </div>
+            @if ($documents->isEmpty())
+                <p class="text-center text-sm text-oassab-gray">Nenhum documento publicado no momento.</p>
+            @else
+                <div class="grid gap-6">
+                    @foreach ($documents as $document)
+                        <x-transparency-document-card :document="$document" />
+                    @endforeach
+                </div>
+                <p class="mt-12 text-center text-sm text-oassab-gray">
+                    Os arquivos abrem em uma nova aba. Caso prefira, clique com o botão direito e escolha “Salvar link como...”.
+                </p>
+            @endif
         </div>
     </section>
 

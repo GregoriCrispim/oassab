@@ -32,6 +32,8 @@ class ContentCache
         'list:noticias',
         'list:projetos',
         'list:transparencia',
+        'list:transparency-documents',
+        'list:editais',
         'categories:all',
     ];
 
@@ -53,6 +55,16 @@ class ContentCache
     public static function neighborsKey(string $slug): string
     {
         return 'post:'.$slug.':neighbors';
+    }
+
+    public static function editalKey(string $slug): string
+    {
+        return 'edital:'.$slug;
+    }
+
+    public static function editalNeighborsKey(string $slug): string
+    {
+        return 'edital:'.$slug.':neighbors';
     }
 
     public static function pageKey(string $uri): string

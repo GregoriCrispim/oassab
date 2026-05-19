@@ -3,11 +3,15 @@
     $sidebar = [
         ['label' => 'Dashboard', 'href' => route('admin.dashboard'), 'active' => $current === 'admin', 'icon' => 'home'],
         ['label' => 'Posts', 'href' => route('admin.posts.index'), 'active' => str_starts_with($current, 'admin/posts'), 'icon' => 'doc'],
+        ['label' => 'Transparência', 'href' => route('admin.transparency-documents.index'), 'active' => str_starts_with($current, 'admin/transparency-documents'), 'icon' => 'pdf'],
+        ['label' => 'Editais', 'href' => route('admin.editais.index'), 'active' => str_starts_with($current, 'admin/editais'), 'icon' => 'edital'],
         ['label' => 'Meu perfil', 'href' => route('admin.profile.edit'), 'active' => str_starts_with($current, 'admin/profile'), 'icon' => 'user'],
     ];
     $icons = [
         'home' => '<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10a1 1 0 0 0 1 1h4v-7h4v7h4a1 1 0 0 0 1-1V10"/>',
         'doc'  => '<path stroke-linecap="round" stroke-linejoin="round" d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" d="M14 3v6h6M9 14h6M9 18h6"/>',
+        'pdf'  => '<path stroke-linecap="round" stroke-linejoin="round" d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" d="M14 3v6h6M9 14h6M9 18h4"/>',
+        'edital' => '<path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/>',
         'user' => '<circle cx="12" cy="8" r="4" stroke-linecap="round" stroke-linejoin="round"/><path stroke-linecap="round" stroke-linejoin="round" d="M4 21c0-4 4-7 8-7s8 3 8 7"/>',
     ];
 @endphp
@@ -90,8 +94,8 @@
                     </div>
                 @endif
 
-                @if ($errors->any() && ! ($errors->any() && request()->routeIs('admin.posts.*')))
-                    @if (! request()->routeIs('admin.posts.*'))
+                @if ($errors->any() && ! request()->routeIs(['admin.posts.*', 'admin.transparency-documents.*', 'admin.editais.*']))
+                    @if (! request()->routeIs(['admin.posts.*', 'admin.transparency-documents.*', 'admin.editais.*']))
                         <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm text-red-800">
                             <p class="mb-1 font-semibold">Corrija os erros abaixo:</p>
                             <ul class="list-disc space-y-1 pl-5">

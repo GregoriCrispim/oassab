@@ -116,6 +116,55 @@ php artisan serve
 
 Acesse <http://127.0.0.1:8000>.
 
+## Primeira vez: MySQL no cPanel (HostGator)
+
+O **Remote MySQL** com host `%` só libera **de qual IP** pode conectar. Ele **não** cria o usuário MySQL, **não** cria o banco e **não** cria as tabelas do Laravel.
+
+### 1. No cPanel → MySQL® Databases
+
+1. **Create New Database** — ex.: `oassab44_laravel` (o nome completo no cPanel já vem com o prefixo da conta).
+2. **Create New User** — ex.: `oassab44_admin` (pode ser outro nome; **não precisa** ser igual ao do banco).
+3. **Add User To Database** — associe o usuário ao banco com **ALL PRIVILEGES**.
+4. Anote **nome exato** do banco, do usuário e a **senha** (copie para o `.env`).
+
+### 2. Remote MySQL (acesso da sua máquina)
+
+cPanel → **Remote MySQL** → adicione `%` (ou seu IP fixo). Isso é só firewall; o passo 1 ainda é obrigatório.
+
+### 3. `.env` (local apontando para o remoto)
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=216.172.172.253
+DB_PORT=3306
+DB_DATABASE=oassab44_laravel
+DB_USERNAME=oassab44_admin
+DB_PASSWORD=<senha criada no passo 1>
+```
+
+`DB_USERNAME` deve ser o **usuário MySQL** do cPanel, não o nome do banco (a menos que você tenha criado os dois com o mesmo nome de propósito).
+
+No **servidor** (produção), use `DB_HOST=localhost` com o mesmo banco/usuário/senha.
+
+### 4. Criar tabelas e admin (na sua máquina ou no Terminal do cPanel)
+
+```bash
+php artisan config:clear
+php artisan migrate --force
+php artisan db:seed --force
+php artisan storage:link
+```
+
+Isso cria `users`, `posts`, `categories`, etc., e o admin padrão (`admin@oassab.org.br` / `OASSAB@2026`).
+
+### 5. Conferir
+
+```bash
+php artisan db:show
+```
+
+Se listar tabelas, a conexão está ok. Teste o login em `/admin/login`.
+
 ## Erro 500 ou falha no login do admin
 
 A tela de login (`GET /admin/login`) é só HTML; o **POST** consulta a tabela `users` no MySQL. Se a conexão falhar, o Laravel responde 500 (ou mensagem de erro no formulário, após atualização do `LoginController`).
@@ -126,7 +175,7 @@ Confira `storage/logs/laravel.log`. O caso mais comum:
 Access denied for user '...'@'seu-ip-externo' (using password: YES)
 ```
 
-**Causa:** credenciais incorretas no `.env` ou MySQL remoto bloqueado (HostGator só aceita conexões externas se o IP estiver em **Remote MySQL** no cPanel).
+**Causas comuns:** usuário/banco **não criados** no cPanel; usuário sem **ALL PRIVILEGES** no banco; `DB_USERNAME`/`DB_PASSWORD` diferentes do cPanel; migrations não rodadas (`users` inexistente); ou IP não liberado em **Remote MySQL** (além do `%`, o usuário MySQL do passo “MySQL® Databases” ainda é obrigatório).
 
 **Correção:**
 

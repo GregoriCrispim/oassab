@@ -35,7 +35,7 @@ class PostController extends Controller
         }
 
         $posts = $query->paginate(15)->withQueryString();
-        $categories = Category::orderBy('name')->get();
+        $categories = Category::assignableToPosts()->orderBy('name')->get();
 
         return view('admin.posts.index', [
             'posts' => $posts,
@@ -54,7 +54,7 @@ class PostController extends Controller
 
         return view('admin.posts.form', [
             'post' => $post,
-            'categories' => Category::orderBy('name')->get(),
+            'categories' => Category::assignableToPosts()->orderBy('name')->get(),
             'selectedCategoryIds' => [],
         ]);
     }
@@ -79,8 +79,11 @@ class PostController extends Controller
     {
         return view('admin.posts.form', [
             'post' => $post,
-            'categories' => Category::orderBy('name')->get(),
-            'selectedCategoryIds' => $post->categories->pluck('id')->all(),
+            'categories' => Category::assignableToPosts()->orderBy('name')->get(),
+            'selectedCategoryIds' => $post->categories
+                ->where('slug', '!=', Category::TRANSPARENCIA)
+                ->pluck('id')
+                ->all(),
         ]);
     }
 

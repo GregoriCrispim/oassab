@@ -96,18 +96,55 @@
             </div>
 
             <div class="rounded-2xl border border-oassab-border bg-white p-6 shadow-sm">
-                <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-oassab-blue">Categorias</p>
-                <p class="mb-3 text-xs text-oassab-gray">Selecione pelo menos uma. O post aparecerá em todas as páginas das categorias marcadas.</p>
+                <p class="text-xs font-semibold uppercase tracking-wider text-oassab-blue">Categorias</p>
+                <p class="mt-2 text-sm text-oassab-gray">Selecione onde o post será exibido no site.</p>
 
-                @php $current = old('categories', $selectedCategoryIds); @endphp
-                <div class="space-y-2">
+                <p class="mt-4 rounded-xl border border-oassab-blue/10 bg-oassab-cream/80 px-4 py-3 text-xs leading-relaxed text-oassab-gray">
+                    Documentos do Portal da Transparência usam outro formato — cadastre em
+                    <a href="{{ route('admin.transparency-documents.index') }}" class="font-semibold text-oassab-orange hover:underline">Admin → Transparência</a>.
+                </p>
+
+                @php
+                    $current = old('categories', $selectedCategoryIds);
+                    $categoryMeta = [
+                        'noticias' => [
+                            'description' => 'Listagem de notícias; entre as mais recentes, pode aparecer na página inicial.',
+                            'page_url' => route('noticias'),
+                            'page_label' => 'Ver notícias',
+                        ],
+                        'projetos' => [
+                            'description' => 'Seção «Projetos em andamento» na página de projetos.',
+                            'page_url' => route('projetos'),
+                            'page_label' => 'Ver projetos',
+                        ],
+                    ];
+                @endphp
+
+                <div class="mt-5 space-y-3">
                     @foreach ($categories as $cat)
-                        <label class="flex items-center gap-2 text-sm text-oassab-blue">
-                            <input type="checkbox" name="categories[]" value="{{ $cat->id }}"
-                                   @checked(in_array($cat->id, (array) $current))
-                                   class="h-4 w-4 rounded border-oassab-border text-oassab-orange focus:ring-oassab-orange">
-                            {{ $cat->name }}
-                        </label>
+                        @php $meta = $categoryMeta[$cat->slug] ?? null; @endphp
+                        <div class="flex flex-col gap-3 rounded-xl border border-oassab-border bg-white p-4 transition hover:border-oassab-orange/30 hover:bg-oassab-cream/40 sm:flex-row sm:items-center sm:gap-4">
+                            <label class="flex min-w-0 flex-1 cursor-pointer items-start gap-3">
+                                <input type="checkbox" name="categories[]" value="{{ $cat->id }}"
+                                       @checked(in_array($cat->id, (array) $current))
+                                       class="mt-1 h-4 w-4 shrink-0 rounded border-oassab-border text-oassab-orange focus:ring-oassab-orange">
+                                <span class="min-w-0">
+                                    <span class="block text-sm font-semibold text-oassab-blue">{{ $cat->name }}</span>
+                                    @if ($meta)
+                                        <span class="mt-1 block text-xs leading-relaxed text-oassab-gray">{{ $meta['description'] }}</span>
+                                    @endif
+                                </span>
+                            </label>
+                            @if ($meta)
+                                <a href="{{ $meta['page_url'] }}" target="_blank" rel="noopener"
+                                   class="inline-flex shrink-0 items-center justify-center gap-1.5 self-start rounded-full border border-oassab-blue/15 bg-white px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-oassab-blue transition hover:border-oassab-orange hover:bg-oassab-orange hover:text-white sm:self-center">
+                                    {{ $meta['page_label'] }}
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5" aria-hidden="true">
+                                        <path d="M14 3h7v7M21 3l-9 9M5 5h6V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6h-2v6H5z"/>
+                                    </svg>
+                                </a>
+                            @endif
+                        </div>
                     @endforeach
                 </div>
             </div>

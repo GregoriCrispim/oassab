@@ -2,13 +2,12 @@
 
 namespace App\Http\Requests\Admin;
 
-use App\Models\Category;
-use App\Models\Post;
+use App\Models\Edital;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
-class StorePostRequest extends FormRequest
+class StoreEditalRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -17,7 +16,7 @@ class StorePostRequest extends FormRequest
 
     public function rules(): array
     {
-        $postId = $this->route('post')?->id;
+        $editalId = $this->route('edital')?->id;
 
         return [
             'title' => ['required', 'string', 'max:255'],
@@ -26,18 +25,20 @@ class StorePostRequest extends FormRequest
                 'string',
                 'max:255',
                 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/i',
-                Rule::unique('posts', 'slug')->ignore($postId),
+                Rule::unique('editais', 'slug')->ignore($editalId),
             ],
             'date' => ['required', 'date'],
             'excerpt' => ['nullable', 'string', 'max:500'],
             'body' => ['nullable', 'string'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
-            'remove_image' => ['nullable', 'boolean'],
-            'categories' => ['required', 'array', 'min:1'],
-            'categories.*' => [
-                'integer',
-                Rule::exists('categories', 'id')->where('slug', '!=', Category::TRANSPARENCIA),
-            ],
+            'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
+            'file' => ['nullable', 'file', 'mimes:pdf', 'max:20480'],
+            'remove_file' => ['nullable', 'boolean'],
+            'attachment_titles' => ['nullable', 'array', 'max:50'],
+            'attachment_titles.*' => ['nullable', 'string', 'max:255'],
+            'attachment_files' => ['nullable', 'array', 'max:50'],
+            'attachment_files.*' => ['nullable', 'file', 'mimes:pdf', 'max:20480'],
+            'remove_attachments' => ['nullable', 'array'],
+            'remove_attachments.*' => ['integer', Rule::exists('edital_attachments', 'id')],
             'is_published' => ['nullable', 'boolean'],
         ];
     }
@@ -45,9 +46,11 @@ class StorePostRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'categories.required' => 'Selecione pelo menos uma categoria para o post.',
             'slug.regex' => 'O slug pode conter apenas letras minúsculas, números e hífens.',
-            'image.max' => 'A imagem deve ter no máximo 4 MB.',
+            'file.mimes' => 'O edital principal deve ser um PDF.',
+            'file.max' => 'O PDF principal deve ter no máximo 20 MB.',
+            'attachment_files.*.mimes' => 'Cada anexo deve ser um PDF.',
+            'attachment_files.*.max' => 'Cada anexo deve ter no máximo 20 MB.',
         ];
     }
 
@@ -59,11 +62,10 @@ class StorePostRequest extends FormRequest
         $title = (string) $this->input('title');
         $slug = $this->input('slug') ?: Str::slug($title);
 
-        // Garante unicidade caso o usuário deixe vazio e exista colisão.
         $base = $slug;
         $i = 2;
-        $postId = $this->route('post')?->id;
-        while (Post::query()->where('slug', $slug)->where('id', '!=', $postId)->exists()) {
+        $editalId = $this->route('edital')?->id;
+        while (Edital::query()->where('slug', $slug)->where('id', '!=', $editalId)->exists()) {
             $slug = $base.'-'.$i;
             $i++;
         }
@@ -74,6 +76,7 @@ class StorePostRequest extends FormRequest
             'date' => $this->input('date'),
             'excerpt' => $this->input('excerpt'),
             'body' => $this->input('body'),
+            'sort_order' => (int) ($this->input('sort_order') ?? 0),
             'is_published' => $this->boolean('is_published'),
         ];
     }

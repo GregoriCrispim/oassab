@@ -46,20 +46,21 @@
                     A OASSAB vai ao encontro de suas entidades parceiras em suas sedes para estreitar laços, conhecer o território onde atuam, identificar necessidades e acompanhar a execução de projetos em parceria.
                 </x-service-card>
 
-                <div class="rounded-2xl border-2 border-dashed border-oassab-orange/40 bg-oassab-orange/5 p-7 lg:col-span-3">
-                    <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-8">
+                <a href="{{ route('editais') }}" class="group block rounded-2xl border-2 border-oassab-orange/50 bg-gradient-to-br from-oassab-orange/10 to-oassab-cream p-8 shadow-sm transition hover:-translate-y-1 hover:border-oassab-orange hover:shadow-xl lg:col-span-3">
+                    <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                         <div>
-                            <h3 class="font-heading text-xl font-bold text-oassab-blue">Programa Edital Aberto</h3>
-                            <p class="mt-2 max-w-3xl text-sm text-oassab-gray">
-                                Apoia financeiramente projetos na área de Assistência Social das entidades associadas da OASSAB. Cada instituição contemplada recebe atualmente <strong class="text-oassab-blue">R$ 10 mil</strong> para aplicar em seu projeto.
+                            <p class="text-xs font-semibold uppercase tracking-[0.25em] text-oassab-orange">Programa Edital Aberto</p>
+                            <h3 class="mt-2 font-heading text-2xl font-bold text-oassab-blue transition group-hover:text-oassab-orange">Acompanhe os editais</h3>
+                            <p class="mt-2 max-w-2xl text-sm text-oassab-gray">
+                                Consulte editais vigentes, critérios, prazos e documentos (PDF) para participação no programa.
                             </p>
                         </div>
-                        <a href="{{ url('/quem-somos') }}#programa-edital" class="btn-ghost shrink-0">
-                            Saiba mais
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-                        </a>
+                        <span class="btn-primary shrink-0">
+                            Ver editais
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                        </span>
                     </div>
-                </div>
+                </a>
             </div>
         </div>
     </section>

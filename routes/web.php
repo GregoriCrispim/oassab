@@ -3,6 +3,8 @@
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\PostController as AdminPostController;
 use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\Admin\EditalController;
+use App\Http\Controllers\Admin\TransparencyDocumentController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\PageController;
 use Illuminate\Support\Facades\Route;
@@ -14,6 +16,8 @@ Route::middleware('page.cache')->group(function () {
     Route::get('/', [PageController::class, 'home'])->name('home');
     Route::get('/quem-somos', [PageController::class, 'quemSomos'])->name('quem-somos');
     Route::get('/projetos', [PageController::class, 'projetos'])->name('projetos');
+    Route::get('/editais', [PageController::class, 'editais'])->name('editais');
+    Route::get('/editais/{edital:slug}', [PageController::class, 'edital'])->name('edital');
     Route::get('/transparencia', [PageController::class, 'transparencia'])->name('transparencia');
     Route::get('/contato', [PageController::class, 'contato'])->name('contato');
     Route::get('/noticias', [PageController::class, 'noticias'])->name('noticias');
@@ -43,6 +47,10 @@ Route::middleware(['auth', 'admin'])
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
         Route::resource('posts', AdminPostController::class)->except(['show']);
+
+        Route::resource('transparency-documents', TransparencyDocumentController::class)->except(['show']);
+
+        Route::resource('editais', EditalController::class)->except(['show']);
 
         Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
