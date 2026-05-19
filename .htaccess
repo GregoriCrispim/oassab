@@ -11,6 +11,9 @@ Require all denied
 </IfModule>
 </Files>
 
-<IfModule mod_alias.c>
-RedirectMatch 301 ^/$ https://gregoricrispim1775005857000.1921008.meusitehostgator.com.br/public
+# Document root = pasta do projeto (não `public/`): encaminha tudo para `public/`
+# sem redirecionar o browser para outro host (evita URL com domínio temporário da hospedagem).
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>
