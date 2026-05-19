@@ -124,6 +124,32 @@ class PostImageStorage
     }
 
     /**
+     * Conjunto de imagem validado no disco (evita src/srcset 404 no HTML).
+     *
+     * @return array{src:string, webp_srcset:?string, jpg_srcset:?string, width:?int, height:?int, base:?string}
+     */
+    public static function safeImageSet(string $slug, ?string $storedImage, ?array $meta): array
+    {
+        $set = self::imageSet($slug, $storedImage, $meta);
+
+        if (! self::existsPublicUrl($set['src'])) {
+            $resolved = self::resolveDisplayUrl($slug, null, null);
+            $set['src'] = $resolved ?? '/images/posts/placeholder.jpg';
+            $set['webp_srcset'] = null;
+            $set['jpg_srcset'] = null;
+        }
+
+        if ($set['webp_srcset'] || $set['jpg_srcset']) {
+            if (self::scanVariantWidths(self::folder($slug), $slug) === []) {
+                $set['webp_srcset'] = null;
+                $set['jpg_srcset'] = null;
+            }
+        }
+
+        return $set;
+    }
+
+    /**
      * @return array{src:string, webp_srcset:?string, jpg_srcset:?string, width:?int, height:?int, base:?string}
      */
     public static function imageSet(string $slug, ?string $storedImage, ?array $meta): array

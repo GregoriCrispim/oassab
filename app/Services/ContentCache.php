@@ -69,7 +69,9 @@ class ContentCache
 
     public static function pageKey(string $uri): string
     {
-        return self::PAGE_PREFIX.($uri === '' ? '_root' : $uri);
+        $version = (string) config('oassab.public_cache_version', '1');
+
+        return self::PAGE_PREFIX.$version.':'.($uri === '' ? '_root' : $uri);
     }
 
     /**

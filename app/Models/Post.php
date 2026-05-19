@@ -49,7 +49,7 @@ class Post extends Model
 
     public function imageSet(): array
     {
-        return PostImageStorage::imageSet(
+        return PostImageStorage::safeImageSet(
             $this->slug,
             $this->image,
             $this->image_meta
