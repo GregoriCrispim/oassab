@@ -116,6 +116,28 @@ php artisan serve
 
 Acesse <http://127.0.0.1:8000>.
 
+## Erro 500 ou falha no login do admin
+
+A tela de login (`GET /admin/login`) é só HTML; o **POST** consulta a tabela `users` no MySQL. Se a conexão falhar, o Laravel responde 500 (ou mensagem de erro no formulário, após atualização do `LoginController`).
+
+Confira `storage/logs/laravel.log`. O caso mais comum:
+
+```
+Access denied for user '...'@'seu-ip-externo' (using password: YES)
+```
+
+**Causa:** credenciais incorretas no `.env` ou MySQL remoto bloqueado (HostGator só aceita conexões externas se o IP estiver em **Remote MySQL** no cPanel).
+
+**Correção:**
+
+| Ambiente | O que fazer |
+|----------|-------------|
+| **Produção (HostGator)** | No `.env` do servidor: `DB_HOST=localhost`, usuário/senha/banco exatamente como no cPanel → MySQL® Databases. Rode `php artisan config:clear` (ou `config:cache`) no servidor. |
+| **Local com MySQL da HostGator** | cPanel → **Remote MySQL** → adicione seu IP público. Use a mesma senha do cPanel (se mudou lá, atualize o `.env` local). |
+| **Local sem Remote MySQL** | Use SQLite no `.env` (`DB_CONNECTION=sqlite`), rode `migrate` + `db:seed` — banco separado do site em produção. |
+
+Isso **não** se resolve com deploy de código: é configuração do `.env` no servidor e/ou permissão MySQL no cPanel. O deploy via GitHub Actions **não envia** o `.env` (está no `.gitignore`).
+
 ## Credenciais padrão do admin
 
 ```
