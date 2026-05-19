@@ -1,0 +1,81 @@
+@import url('https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        @apply font-sans text-oassab-gray bg-oassab-cream antialiased;
+        font-size: 17px;
+        line-height: 1.7;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        @apply font-heading font-semibold text-oassab-blue;
+        line-height: 1.2;
+    }
+
+    a {
+        @apply text-oassab-blue transition-colors;
+    }
+
+    a:hover {
+        @apply text-oassab-orange;
+    }
+
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+}
+
+@layer components {
+    .container-oassab {
+        @apply container max-w-[1200px];
+    }
+
+    .btn-primary {
+        @apply inline-flex items-center gap-2 rounded-full bg-oassab-orange px-7 py-3 text-sm font-semibold uppercase tracking-wider text-white shadow-md transition hover:-translate-y-0.5 hover:bg-oassab-blue hover:text-white;
+    }
+
+    .btn-outline {
+        @apply inline-flex items-center gap-2 rounded-full border-2 border-white px-7 py-3 text-sm font-semibold uppercase tracking-wider text-white transition hover:bg-white hover:text-oassab-blue;
+    }
+
+    .btn-ghost {
+        @apply inline-flex items-center gap-2 rounded-full border border-oassab-blue/20 px-6 py-2.5 text-xs font-semibold uppercase tracking-wider text-oassab-blue transition hover:border-oassab-orange hover:bg-oassab-orange hover:text-white;
+    }
+
+    .section-title {
+        @apply font-heading text-3xl font-bold text-oassab-blue sm:text-4xl;
+    }
+
+    .section-eyebrow {
+        @apply mb-3 inline-block text-xs font-semibold uppercase tracking-[0.25em] text-oassab-orange;
+    }
+
+    .prose-oassab p {
+        @apply mb-4 text-base leading-relaxed text-oassab-gray;
+    }
+
+    .prose-oassab strong {
+        @apply font-semibold text-oassab-blue;
+    }
+
+    .prose-oassab ul {
+        @apply mb-4 list-disc space-y-1 pl-6 text-oassab-gray;
+    }
+
+    .prose-oassab a {
+        @apply text-oassab-orange underline-offset-4 hover:underline;
+    }
+
+    .hero-overlay {
+        background: linear-gradient(120deg, rgba(8, 15, 51, 0.85) 0%, rgba(31, 39, 84, 0.65) 60%, rgba(31, 39, 84, 0.4) 100%);
+    }
+}

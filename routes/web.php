@@ -1,0 +1,49 @@
+<?php
+
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\PostController as AdminPostController;
+use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\PageController;
+use Illuminate\Support\Facades\Route;
+
+// --------------------------------------------------------------------
+// Site público (cache de página inteira via middleware page.cache)
+// --------------------------------------------------------------------
+Route::middleware('page.cache')->group(function () {
+    Route::get('/', [PageController::class, 'home'])->name('home');
+    Route::get('/quem-somos', [PageController::class, 'quemSomos'])->name('quem-somos');
+    Route::get('/projetos', [PageController::class, 'projetos'])->name('projetos');
+    Route::get('/transparencia', [PageController::class, 'transparencia'])->name('transparencia');
+    Route::get('/contato', [PageController::class, 'contato'])->name('contato');
+    Route::get('/noticias', [PageController::class, 'noticias'])->name('noticias');
+    Route::get('/relatorios-de-atividades', [PageController::class, 'relatorios'])->name('relatorios');
+    Route::get('/posts/{slug}', [PageController::class, 'post'])->name('post');
+});
+
+// --------------------------------------------------------------------
+// Autenticação do painel
+// --------------------------------------------------------------------
+Route::middleware('guest')->group(function () {
+    Route::get('/admin/login', [LoginController::class, 'showLoginForm'])->name('admin.login');
+    Route::post('/admin/login', [LoginController::class, 'login']);
+});
+
+Route::post('/admin/logout', [LoginController::class, 'logout'])
+    ->middleware('auth')
+    ->name('admin.logout');
+
+// --------------------------------------------------------------------
+// Painel administrativo
+// --------------------------------------------------------------------
+Route::middleware(['auth', 'admin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+        Route::resource('posts', AdminPostController::class)->except(['show']);
+
+        Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    });
