@@ -96,14 +96,8 @@ class ImageOptimizer
                 $jpg = $variant->encode(new JpegEncoder(quality: self::JPEG_QUALITY));
                 $webp = $variant->encode(new WebpEncoder(quality: self::WEBP_QUALITY));
 
-                Storage::disk($this->disk)->put(
-                    $folder.'/'.$slug.'-'.$w.'.jpg',
-                    (string) $jpg
-                );
-                Storage::disk($this->disk)->put(
-                    $folder.'/'.$slug.'-'.$w.'.webp',
-                    (string) $webp
-                );
+                $this->putFile($folder.'/'.$slug.'-'.$w.'.jpg', (string) $jpg);
+                $this->putFile($folder.'/'.$slug.'-'.$w.'.webp', (string) $webp);
             }
 
             return [
@@ -135,7 +129,7 @@ class ImageOptimizer
         if (! $this->hasImageDriver()) {
             $ext = pathinfo($absolutePath, PATHINFO_EXTENSION) ?: 'jpg';
             $path = $folder.'/'.$slug.'.'.$ext;
-            Storage::disk($this->disk)->put($path, file_get_contents($absolutePath));
+            $this->putFile($path, file_get_contents($absolutePath));
 
             return [
                 'base' => '/storage/'.$folder.'/'.$slug,
@@ -180,14 +174,8 @@ class ImageOptimizer
             $jpg = $variant->encode(new JpegEncoder(quality: self::JPEG_QUALITY));
             $webp = $variant->encode(new WebpEncoder(quality: self::WEBP_QUALITY));
 
-            Storage::disk($this->disk)->put(
-                $folder.'/'.$slug.'-'.$w.'.jpg',
-                (string) $jpg
-            );
-            Storage::disk($this->disk)->put(
-                $folder.'/'.$slug.'-'.$w.'.webp',
-                (string) $webp
-            );
+            $this->putFile($folder.'/'.$slug.'-'.$w.'.jpg', (string) $jpg);
+            $this->putFile($folder.'/'.$slug.'-'.$w.'.webp', (string) $webp);
         }
 
         return [
@@ -284,6 +272,13 @@ class ImageOptimizer
         return new ImageManager(new GdDriver());
     }
 
+    private function putFile(string $path, string $contents): void
+    {
+        if (! Storage::disk($this->disk)->put($path, $contents)) {
+            throw new \RuntimeException('Falha ao gravar arquivo: '.$path);
+        }
+    }
+
     /**
      * Quando não há GD/Imagick, salva o arquivo original sem processar.
      * Mantém a aplicação funcionando, apenas sem responsive images.
@@ -295,9 +290,14 @@ class ImageOptimizer
         $ext = strtolower($file->getClientOriginalExtension() ?: 'jpg');
         $name = $slug.'.'.$ext;
 
-        $file->storeAs($folder, $name, $this->disk);
+        $stored = Storage::disk($this->disk)->putFileAs($folder, $file, $name);
+
+        if (! $stored) {
+            throw new \RuntimeException('Não foi possível salvar a imagem em storage.');
+        }
 
         $size = @getimagesize($file->getRealPath()) ?: [0, 0];
+        $ext = strtolower(pathinfo($stored, PATHINFO_EXTENSION) ?: $ext);
 
         return [
             'base' => '/storage/'.$folder.'/'.$slug,

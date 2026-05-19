@@ -2,13 +2,15 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Http\Requests\Concerns\NormalizesSlug;
 use App\Models\TransparencyDocument;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class StoreTransparencyDocumentRequest extends FormRequest
 {
+    use NormalizesSlug;
+
     public function authorize(): bool
     {
         return $this->user()?->is_admin === true;
@@ -25,7 +27,6 @@ class StoreTransparencyDocumentRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:255',
-                'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/i',
                 Rule::unique('transparency_documents', 'slug')->ignore($documentId),
             ],
             'description' => ['nullable', 'string', 'max:2000'],
@@ -46,7 +47,6 @@ class StoreTransparencyDocumentRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'slug.regex' => 'O slug pode conter apenas letras minúsculas, números e hífens.',
             'file.required' => 'Envie o arquivo PDF do documento.',
             'file.mimes' => 'O arquivo deve ser um PDF.',
             'file.max' => 'O PDF deve ter no máximo 20 MB.',
@@ -59,19 +59,16 @@ class StoreTransparencyDocumentRequest extends FormRequest
      */
     public function payload(): array
     {
-        $title = (string) $this->input('title');
-        $slug = $this->input('slug') ?: Str::slug($title);
-
-        $base = $slug;
-        $i = 2;
         $documentId = $this->route('transparency_document')?->id;
-        while (TransparencyDocument::query()->where('slug', $slug)->where('id', '!=', $documentId)->exists()) {
-            $slug = $base.'-'.$i;
-            $i++;
-        }
+        $slug = $this->resolveUniqueSlug(
+            fn (string $candidate) => TransparencyDocument::query()
+                ->where('slug', $candidate)
+                ->where('id', '!=', $documentId)
+                ->exists()
+        );
 
         return [
-            'title' => $title,
+            'title' => (string) $this->input('title'),
             'slug' => $slug,
             'description' => $this->input('description'),
             'processo' => $this->input('processo'),

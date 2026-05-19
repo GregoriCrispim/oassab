@@ -7,8 +7,10 @@ use App\Http\Requests\Admin\StorePostRequest;
 use App\Models\Category;
 use App\Models\Post;
 use App\Services\ImageOptimizer;
+use App\Support\UploadedFileHelper;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -63,8 +65,14 @@ class PostController extends Controller
     {
         $post = new Post($request->payload());
 
-        if ($request->hasFile('image')) {
-            [$post->image, $post->image_meta] = $this->processImage($request, $post);
+        try {
+            $this->applyImageUpload($request, $post);
+        } catch (\Throwable $e) {
+            Log::error('Falha ao processar imagem do post: '.$e->getMessage(), ['exception' => $e]);
+
+            return back()
+                ->withInput()
+                ->withErrors(['image' => 'Não foi possível salvar a imagem. Verifique o formato (JPG, PNG ou WEBP) e o tamanho (máx. 4 MB).']);
         }
 
         $post->save();
@@ -97,9 +105,14 @@ class PostController extends Controller
             $post->image_meta = null;
         }
 
-        if ($request->hasFile('image')) {
-            $this->purgeImageAssets($post);
-            [$post->image, $post->image_meta] = $this->processImage($request, $post);
+        try {
+            $this->applyImageUpload($request, $post);
+        } catch (\Throwable $e) {
+            Log::error('Falha ao processar imagem do post: '.$e->getMessage(), ['exception' => $e]);
+
+            return back()
+                ->withInput()
+                ->withErrors(['image' => 'Não foi possível salvar a imagem. Verifique o formato (JPG, PNG ou WEBP) e o tamanho (máx. 4 MB).']);
         }
 
         $post->save();
@@ -120,6 +133,16 @@ class PostController extends Controller
             ->with('status', 'Post excluído.');
     }
 
+    private function applyImageUpload(StorePostRequest $request, Post $post): void
+    {
+        if (! UploadedFileHelper::valid($request, 'image')) {
+            return;
+        }
+
+        $this->purgeImageAssets($post);
+        [$post->image, $post->image_meta] = $this->processImage($request, $post);
+    }
+
     /**
      * @return array{0: string, 1: array<string, mixed>}  [imageUrl, imageMeta]
      */
@@ -137,7 +160,6 @@ class PostController extends Controller
             $defaultW = $widths[(int) floor(count($widths) / 2)] ?? end($widths);
             $url = $meta['base'].'-'.$defaultW.'.'.$defaultExt;
         } else {
-            // fallback (sem GD/Imagick): arquivo único.
             $url = $meta['base'].'.'.$defaultExt;
         }
 
@@ -155,7 +177,6 @@ class PostController extends Controller
             return;
         }
 
-        // Legado: imagem única gravada em storage/app/public/posts/...
         if ($post->image && Str::startsWith($post->image, '/storage/')) {
             $relative = Str::after($post->image, '/storage/');
             Storage::disk('public')->delete($relative);

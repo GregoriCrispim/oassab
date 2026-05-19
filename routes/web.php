@@ -46,11 +46,15 @@ Route::middleware(['auth', 'admin'])
     ->group(function () {
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-        Route::resource('posts', AdminPostController::class)->except(['show']);
+        Route::resource('posts', AdminPostController::class)->except(['show', 'update']);
+        Route::post('posts/{post}', [AdminPostController::class, 'update'])->name('posts.update');
 
-        Route::resource('transparency-documents', TransparencyDocumentController::class)->except(['show']);
+        Route::resource('transparency-documents', TransparencyDocumentController::class)->except(['show', 'update']);
+        Route::post('transparency-documents/{transparency_document}', [TransparencyDocumentController::class, 'update'])
+            ->name('transparency-documents.update');
 
-        Route::resource('editais', EditalController::class)->except(['show']);
+        Route::resource('editais', EditalController::class)->except(['show', 'update']);
+        Route::post('editais/{edital}', [EditalController::class, 'update'])->name('editais.update');
 
         Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');

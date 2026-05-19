@@ -112,6 +112,42 @@
         </div>
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slugify = (value) => value
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .trim()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '');
+
+            const normalizeSlugInput = (input) => {
+                const raw = input.value.trim();
+                if (!raw) {
+                    return;
+                }
+                input.value = slugify(raw);
+            };
+
+            document.querySelectorAll('[data-slug-input]').forEach((input) => {
+                const form = input.closest('form');
+                const sourceName = input.dataset.slugSource;
+                const source = sourceName && form?.querySelector(`[name="${sourceName}"]`);
+
+                input.addEventListener('blur', () => normalizeSlugInput(input));
+
+                source?.addEventListener('blur', () => {
+                    if (!input.value.trim() && source.value.trim()) {
+                        input.value = slugify(source.value);
+                    }
+                });
+
+                form?.addEventListener('submit', () => normalizeSlugInput(input));
+            });
+        });
+    </script>
+
     @stack('scripts')
 </body>
 </html>

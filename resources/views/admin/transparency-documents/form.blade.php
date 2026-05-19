@@ -24,9 +24,6 @@
 
     <form method="POST" action="{{ $action }}" enctype="multipart/form-data" class="grid gap-6 lg:grid-cols-[2fr,1fr]">
         @csrf
-        @if ($isEditing)
-            @method('PUT')
-        @endif
 
         <div class="space-y-6">
             <div class="rounded-2xl border border-oassab-border bg-white p-6 shadow-sm">
@@ -40,7 +37,9 @@
                 <label class="mt-4 block">
                     <span class="text-xs font-semibold uppercase tracking-wider text-oassab-blue">Slug (identificador interno)</span>
                     <input type="text" name="slug" value="{{ old('slug', $document->slug) }}" placeholder="deixe vazio para gerar a partir do nome"
+                           data-slug-input data-slug-source="title"
                            class="mt-2 w-full rounded-lg border border-oassab-border bg-white px-4 py-3 text-sm text-oassab-blue focus:border-oassab-orange focus:outline-none">
+                    <span class="mt-1 block text-xs text-oassab-gray">Acentos, espaços e maiúsculas são ajustados automaticamente (ex.: «Termo 2024» → termo-2024).</span>
                 </label>
 
                 <label class="mt-4 block">

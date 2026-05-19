@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreEditalRequest;
 use App\Models\Edital;
 use App\Models\EditalAttachment;
+use App\Support\UploadedFileHelper;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -49,7 +50,7 @@ class EditalController extends Controller
     {
         $edital = new Edital($request->payload());
 
-        if ($request->hasFile('file')) {
+        if (UploadedFileHelper::valid($request, 'file')) {
             $this->storeMainPdf($request->file('file'), $edital);
         }
 
@@ -79,7 +80,7 @@ class EditalController extends Controller
             $edital->original_filename = null;
         }
 
-        if ($request->hasFile('file')) {
+        if (UploadedFileHelper::valid($request, 'file')) {
             $this->deleteMainPdf($edital);
             $this->storeMainPdf($request->file('file'), $edital);
         } elseif ($oldSlug !== $edital->slug) {
@@ -107,11 +108,15 @@ class EditalController extends Controller
 
     private function storeMainPdf(UploadedFile $file, Edital $edital): void
     {
-        $relativePath = $file->storeAs(
+        $relativePath = Storage::disk('public')->putFileAs(
             'editais/'.$edital->slug,
-            $edital->slug.'.pdf',
-            'public'
+            $file,
+            $edital->slug.'.pdf'
         );
+
+        if (! $relativePath) {
+            throw new \RuntimeException('Não foi possível salvar o PDF do edital.');
+        }
 
         $edital->file_path = '/storage/'.$relativePath;
         $edital->original_filename = $file->getClientOriginalName();
@@ -180,13 +185,21 @@ class EditalController extends Controller
         $maxSort = (int) $edital->attachments()->max('sort_order');
 
         foreach ($files as $index => $file) {
-            if (! $file instanceof UploadedFile) {
+            if (! $file instanceof UploadedFile || ! $file->isValid()) {
                 continue;
             }
 
             $title = trim((string) ($titles[$index] ?? '')) ?: $file->getClientOriginalName();
             $storedName = Str::uuid()->toString().'.pdf';
-            $relativePath = $file->storeAs('editais/'.$edital->slug.'/anexos', $storedName, 'public');
+            $relativePath = Storage::disk('public')->putFileAs(
+                'editais/'.$edital->slug.'/anexos',
+                $file,
+                $storedName
+            );
+
+            if (! $relativePath) {
+                continue;
+            }
 
             $edital->attachments()->create([
                 'title' => $title,

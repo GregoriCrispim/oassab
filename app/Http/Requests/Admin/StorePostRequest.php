@@ -2,14 +2,16 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Http\Requests\Concerns\NormalizesSlug;
 use App\Models\Category;
 use App\Models\Post;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class StorePostRequest extends FormRequest
 {
+    use NormalizesSlug;
+
     public function authorize(): bool
     {
         return $this->user()?->is_admin === true;
@@ -25,13 +27,12 @@ class StorePostRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:255',
-                'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/i',
                 Rule::unique('posts', 'slug')->ignore($postId),
             ],
             'date' => ['required', 'date'],
             'excerpt' => ['nullable', 'string', 'max:500'],
             'body' => ['nullable', 'string'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'image' => ['nullable', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'remove_image' => ['nullable', 'boolean'],
             'categories' => ['required', 'array', 'min:1'],
             'categories.*' => [
@@ -46,7 +47,6 @@ class StorePostRequest extends FormRequest
     {
         return [
             'categories.required' => 'Selecione pelo menos uma categoria para o post.',
-            'slug.regex' => 'O slug pode conter apenas letras minúsculas, números e hífens.',
             'image.max' => 'A imagem deve ter no máximo 4 MB.',
         ];
     }
@@ -56,20 +56,16 @@ class StorePostRequest extends FormRequest
      */
     public function payload(): array
     {
-        $title = (string) $this->input('title');
-        $slug = $this->input('slug') ?: Str::slug($title);
-
-        // Garante unicidade caso o usuário deixe vazio e exista colisão.
-        $base = $slug;
-        $i = 2;
         $postId = $this->route('post')?->id;
-        while (Post::query()->where('slug', $slug)->where('id', '!=', $postId)->exists()) {
-            $slug = $base.'-'.$i;
-            $i++;
-        }
+        $slug = $this->resolveUniqueSlug(
+            fn (string $candidate) => Post::query()
+                ->where('slug', $candidate)
+                ->where('id', '!=', $postId)
+                ->exists()
+        );
 
         return [
-            'title' => $title,
+            'title' => (string) $this->input('title'),
             'slug' => $slug,
             'date' => $this->input('date'),
             'excerpt' => $this->input('excerpt'),

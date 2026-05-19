@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreTransparencyDocumentRequest;
 use App\Models\TransparencyDocument;
+use App\Support\UploadedFileHelper;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -48,8 +49,8 @@ class TransparencyDocumentController extends Controller
     {
         $document = new TransparencyDocument($request->payload());
 
-        if ($request->hasFile('file')) {
-            $this->storePdf($request, $document);
+        if (UploadedFileHelper::valid($request, 'file')) {
+            $this->storePdf($request->file('file'), $document);
         }
 
         $document->save();
@@ -71,9 +72,9 @@ class TransparencyDocumentController extends Controller
         $oldSlug = $transparency_document->slug;
         $transparency_document->fill($request->payload());
 
-        if ($request->hasFile('file')) {
+        if (UploadedFileHelper::valid($request, 'file')) {
             $this->purgePdf($transparency_document);
-            $this->storePdf($request, $transparency_document);
+            $this->storePdf($request->file('file'), $transparency_document);
         } elseif ($oldSlug !== $transparency_document->slug && $transparency_document->file_path) {
             $this->renamePdfFolder($transparency_document, $oldSlug);
         }
@@ -95,13 +96,20 @@ class TransparencyDocumentController extends Controller
             ->with('status', 'Documento excluído.');
     }
 
-    private function storePdf(StoreTransparencyDocumentRequest $request, TransparencyDocument $document): void
+    private function storePdf(\Illuminate\Http\UploadedFile $file, TransparencyDocument $document): void
     {
-        $file = $request->file('file');
-        $slug = $document->slug;
-        $filename = $slug.'.pdf';
+        $filename = $document->slug.'.pdf';
 
-        $relativePath = $file->storeAs('transparency/'.$slug, $filename, 'public');
+        $relativePath = Storage::disk('public')->putFileAs(
+            'transparency/'.$document->slug,
+            $file,
+            $filename
+        );
+
+        if (! $relativePath) {
+            throw new \RuntimeException('Não foi possível salvar o PDF.');
+        }
+
         $document->file_path = '/storage/'.$relativePath;
         $document->original_filename = $file->getClientOriginalName();
     }

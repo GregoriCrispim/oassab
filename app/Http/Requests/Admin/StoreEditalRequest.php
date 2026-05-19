@@ -2,13 +2,15 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Http\Requests\Concerns\NormalizesSlug;
 use App\Models\Edital;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class StoreEditalRequest extends FormRequest
 {
+    use NormalizesSlug;
+
     public function authorize(): bool
     {
         return $this->user()?->is_admin === true;
@@ -24,7 +26,6 @@ class StoreEditalRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:255',
-                'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/i',
                 Rule::unique('editais', 'slug')->ignore($editalId),
             ],
             'date' => ['required', 'date'],
@@ -46,7 +47,6 @@ class StoreEditalRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'slug.regex' => 'O slug pode conter apenas letras minúsculas, números e hífens.',
             'file.mimes' => 'O edital principal deve ser um PDF.',
             'file.max' => 'O PDF principal deve ter no máximo 20 MB.',
             'attachment_files.*.mimes' => 'Cada anexo deve ser um PDF.',
@@ -59,19 +59,16 @@ class StoreEditalRequest extends FormRequest
      */
     public function payload(): array
     {
-        $title = (string) $this->input('title');
-        $slug = $this->input('slug') ?: Str::slug($title);
-
-        $base = $slug;
-        $i = 2;
         $editalId = $this->route('edital')?->id;
-        while (Edital::query()->where('slug', $slug)->where('id', '!=', $editalId)->exists()) {
-            $slug = $base.'-'.$i;
-            $i++;
-        }
+        $slug = $this->resolveUniqueSlug(
+            fn (string $candidate) => Edital::query()
+                ->where('slug', $candidate)
+                ->where('id', '!=', $editalId)
+                ->exists()
+        );
 
         return [
-            'title' => $title,
+            'title' => (string) $this->input('title'),
             'slug' => $slug,
             'date' => $this->input('date'),
             'excerpt' => $this->input('excerpt'),
