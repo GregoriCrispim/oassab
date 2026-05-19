@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\StorePostRequest;
 use App\Models\Category;
 use App\Models\Post;
 use App\Services\ImageOptimizer;
+use App\Services\PostImageStorage;
 use App\Support\UploadedFileHelper;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -78,6 +79,10 @@ class PostController extends Controller
         $post->save();
         $post->categories()->sync($request->input('categories', []));
 
+        if (! UploadedFileHelper::valid($request, 'image')) {
+            $this->reconcileAndPersistImage($post);
+        }
+
         return redirect()
             ->route('admin.posts.index')
             ->with('status', 'Post criado com sucesso.');
@@ -85,6 +90,11 @@ class PostController extends Controller
 
     public function edit(Post $post): View
     {
+        if ($post->image || $post->image_meta || PostImageStorage::metaFromDisk($post->slug)) {
+            $this->reconcileAndPersistImage($post);
+            $post->refresh();
+        }
+
         return view('admin.posts.form', [
             'post' => $post,
             'categories' => Category::assignableToPosts()->orderBy('name')->get(),
@@ -97,7 +107,13 @@ class PostController extends Controller
 
     public function update(StorePostRequest $request, Post $post): RedirectResponse
     {
+        $oldSlug = $post->slug;
         $post->fill($request->payload());
+
+        if ($oldSlug !== $post->slug && ($post->image || $post->image_meta)) {
+            PostImageStorage::renameFolder($oldSlug, $post->slug);
+            [$post->image, $post->image_meta] = $this->reconcileStoredImage($post);
+        }
 
         if ($request->boolean('remove_image') && ($post->image || $post->image_meta)) {
             $this->purgeImageAssets($post);
@@ -117,6 +133,10 @@ class PostController extends Controller
 
         $post->save();
         $post->categories()->sync($request->input('categories', []));
+
+        if (! UploadedFileHelper::valid($request, 'image') && ! $request->boolean('remove_image')) {
+            $this->reconcileAndPersistImage($post);
+        }
 
         return redirect()
             ->route('admin.posts.index')
@@ -153,17 +173,39 @@ class PostController extends Controller
 
         $meta = $this->optimizer->optimize($file, $slug);
 
-        $defaultExt = $meta['ext_default'] ?? 'jpg';
-        $widths = $meta['widths'] ?? [];
+        return PostImageStorage::normalizeAfterUpload($slug, $meta);
+    }
 
-        if (! empty($widths)) {
-            $defaultW = $widths[(int) floor(count($widths) / 2)] ?? end($widths);
-            $url = $meta['base'].'-'.$defaultW.'.'.$defaultExt;
-        } else {
-            $url = $meta['base'].'.'.$defaultExt;
+    /**
+     * @return array{0: ?string, 1: ?array<string, mixed>}
+     */
+    private function reconcileStoredImage(Post $post): array
+    {
+        $url = PostImageStorage::resolveDisplayUrl($post->slug, $post->image, $post->image_meta);
+
+        if (! $url) {
+            return [null, null];
         }
 
+        $meta = PostImageStorage::metaFromDisk($post->slug)
+            ?? (is_array($post->image_meta) ? $post->image_meta : []);
+
         return [$url, $meta];
+    }
+
+    private function reconcileAndPersistImage(Post $post): void
+    {
+        [$url, $meta] = $this->reconcileStoredImage($post);
+
+        if (! $url) {
+            $post->image = null;
+            $post->image_meta = null;
+        } else {
+            $post->image = $url;
+            $post->image_meta = $meta;
+        }
+
+        $post->save();
     }
 
     private function purgeImageAssets(Post $post): void

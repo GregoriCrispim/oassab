@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\PostImageStorage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -37,40 +38,22 @@ class Post extends Model
      *
      * @return array{src:string, webp_srcset:?string, jpg_srcset:?string, width:?int, height:?int, base:?string}
      */
+    public function coverImageUrl(): ?string
+    {
+        return PostImageStorage::resolveDisplayUrl(
+            $this->slug,
+            $this->image,
+            $this->image_meta
+        );
+    }
+
     public function imageSet(): array
     {
-        $meta = $this->image_meta;
-
-        if (is_array($meta) && ! empty($meta['base']) && ! empty($meta['widths'])) {
-            $base = $meta['base'];
-            $widths = $meta['widths'];
-            $defaultExt = $meta['ext_default'] ?? 'jpg';
-
-            $jpg = collect($widths)->map(fn ($w) => "{$base}-{$w}.{$defaultExt} {$w}w")->implode(', ');
-            $webp = in_array('webp', $meta['formats'] ?? [], true)
-                ? collect($widths)->map(fn ($w) => "{$base}-{$w}.webp {$w}w")->implode(', ')
-                : null;
-
-            $defaultW = $widths[(int) floor(count($widths) / 2)] ?? end($widths);
-
-            return [
-                'src' => "{$base}-{$defaultW}.{$defaultExt}",
-                'webp_srcset' => $webp,
-                'jpg_srcset' => $jpg,
-                'width' => isset($meta['width']) ? (int) $meta['width'] : null,
-                'height' => isset($meta['height']) ? (int) $meta['height'] : null,
-                'base' => $base,
-            ];
-        }
-
-        return [
-            'src' => $this->image ?: '/images/posts/placeholder.jpg',
-            'webp_srcset' => null,
-            'jpg_srcset' => null,
-            'width' => null,
-            'height' => null,
-            'base' => null,
-        ];
+        return PostImageStorage::imageSet(
+            $this->slug,
+            $this->image,
+            $this->image_meta
+        );
     }
 
     public function categories(): BelongsToMany

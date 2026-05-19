@@ -3,6 +3,7 @@
 @php
     $isEditing = $post->exists;
     $action = $isEditing ? route('admin.posts.update', $post) : route('admin.posts.store');
+    $coverImageUrl = $post->coverImageUrl();
 @endphp
 
 @section('title', $isEditing ? 'Editar post' : 'Novo post')
@@ -152,18 +153,18 @@
                 <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-oassab-blue">Capa</p>
 
                 <div data-image-preview-box
-                     class="mb-4 overflow-hidden rounded-xl border border-oassab-border bg-oassab-cream/50 {{ $post->image ? '' : 'hidden' }}">
+                     class="mb-4 overflow-hidden rounded-xl border border-oassab-border bg-oassab-cream/50 {{ $coverImageUrl ? '' : 'hidden' }}">
                     <p class="border-b border-oassab-border bg-white px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-oassab-gray">
-                        <span data-image-preview-label>{{ $post->image ? 'Imagem atual' : 'Pré-visualização' }}</span>
+                        <span data-image-preview-label>{{ $coverImageUrl ? 'Imagem atual' : 'Pré-visualização' }}</span>
                     </p>
                     <img data-image-preview-img
-                         src="{{ $post->image ?? '' }}"
+                         src="{{ $coverImageUrl ?? '' }}"
                          alt="Pré-visualização da capa"
                          class="h-48 w-full object-cover"
-                         @if (! $post->image) hidden @endif>
+                         @if (! $coverImageUrl) hidden @endif>
                 </div>
 
-                @if ($post->image)
+                @if ($coverImageUrl)
                     <label class="mb-3 flex items-center gap-2 text-sm text-oassab-gray">
                         <input type="checkbox" name="remove_image" value="1"
                                data-image-preview-remove
@@ -174,7 +175,7 @@
 
                 <input type="file" name="image" accept="image/png,image/jpeg,image/webp"
                        data-image-preview-input
-                       data-existing-src="{{ $post->image ?? '' }}"
+                       data-existing-src="{{ $coverImageUrl ?? '' }}"
                        class="block w-full text-xs text-oassab-gray file:mr-3 file:rounded-full file:border-0 file:bg-oassab-blue file:px-4 file:py-2 file:text-xs file:font-semibold file:uppercase file:tracking-wider file:text-white hover:file:bg-oassab-orange">
                 <p class="mt-2 text-xs text-oassab-gray">JPG, PNG ou WEBP — até 4 MB. A pré-visualização aparece ao selecionar o arquivo.</p>
             </div>
