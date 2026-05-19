@@ -79,12 +79,7 @@ class PostController extends Controller
 
         $post->save();
         $post->categories()->sync($request->input('categories', []));
-
-        if (! UploadedFileHelper::valid($request, 'image')) {
-            $this->reconcileAndPersistImage($post);
-        }
-
-        $this->publishPublicStorage();
+        $this->finalizePostImage($post, UploadedFileHelper::valid($request, 'image'));
 
         return redirect()
             ->route('admin.posts.index')
@@ -93,7 +88,7 @@ class PostController extends Controller
 
     public function edit(Post $post): View
     {
-        if ($post->image || $post->image_meta || PostImageStorage::metaFromDisk($post->slug)) {
+        if (PostImageStorage::pickPrimaryRelativePath($post->slug)) {
             $this->reconcileAndPersistImage($post);
             $post->refresh();
         }
@@ -115,13 +110,13 @@ class PostController extends Controller
 
         if ($oldSlug !== $post->slug && ($post->image || $post->image_meta)) {
             PostImageStorage::renameFolder($oldSlug, $post->slug);
-            [$post->image, $post->image_meta] = $this->reconcileStoredImage($post);
         }
 
-        if ($request->boolean('remove_image') && ($post->image || $post->image_meta)) {
+        if ($request->boolean('remove_image') && ($post->image || $post->image_meta || $post->image_filename)) {
             $this->purgeImageAssets($post);
             $post->image = null;
             $post->image_meta = null;
+            $post->image_filename = null;
         }
 
         try {
@@ -136,12 +131,10 @@ class PostController extends Controller
 
         $post->save();
         $post->categories()->sync($request->input('categories', []));
-
-        if (! UploadedFileHelper::valid($request, 'image') && ! $request->boolean('remove_image')) {
-            $this->reconcileAndPersistImage($post);
-        }
-
-        $this->publishPublicStorage();
+        $this->finalizePostImage(
+            $post,
+            UploadedFileHelper::valid($request, 'image') || (! $request->boolean('remove_image') && ($post->image || PostImageStorage::pickPrimaryRelativePath($post->slug)))
+        );
 
         return redirect()
             ->route('admin.posts.index')
@@ -152,7 +145,7 @@ class PostController extends Controller
     {
         $this->purgeImageAssets($post);
         $post->delete();
-        $this->publishPublicStorage();
+        PublicStoragePublisher::publish();
 
         return redirect()
             ->route('admin.posts.index')
@@ -166,73 +159,43 @@ class PostController extends Controller
         }
 
         $this->purgeImageAssets($post);
-        [$post->image, $post->image_meta] = $this->processImage($request, $post);
-    }
-
-    /**
-     * @return array{0: string, 1: array<string, mixed>}  [imageUrl, imageMeta]
-     */
-    private function processImage(StorePostRequest $request, Post $post): array
-    {
-        $file = $request->file('image');
         $slug = $post->slug ?: Str::slug($post->title);
-
-        $meta = $this->optimizer->optimize($file, $slug);
-
-        return PostImageStorage::normalizeAfterUpload($slug, $meta);
+        $this->optimizer->optimize($request->file('image'), $slug);
     }
 
     /**
      * @return array{0: ?string, 1: ?array<string, mixed>}
      */
-    private function reconcileStoredImage(Post $post): array
+    private function finalizePostImage(Post $post, bool $syncFromDisk): void
     {
-        $url = PostImageStorage::resolveDisplayUrl($post->slug, $post->image, $post->image_meta);
+        PublicStoragePublisher::publish();
 
-        if (! $url) {
-            return [null, null];
+        if (! $syncFromDisk) {
+            return;
         }
 
-        $meta = PostImageStorage::metaFromDisk($post->slug)
-            ?? (is_array($post->image_meta) ? $post->image_meta : []);
-
-        return [$url, $meta];
+        PostImageStorage::applyRecord($post);
+        $post->save();
     }
 
     private function reconcileAndPersistImage(Post $post): void
     {
-        [$url, $meta] = $this->reconcileStoredImage($post);
-
-        if (! $url) {
-            $post->image = null;
-            $post->image_meta = null;
-        } else {
-            $post->image = $url;
-            $post->image_meta = $meta;
-        }
-
-        $post->save();
-    }
-
-    private function publishPublicStorage(): void
-    {
         PublicStoragePublisher::publish();
+        PostImageStorage::applyRecord($post);
+        $post->save();
     }
 
     private function purgeImageAssets(Post $post): void
     {
-        $base = $post->image_meta['base'] ?? null;
+        $relative = PostImageStorage::relativeFromUrl($post->image)
+            ?? (isset($post->image_meta['path']) ? $post->image_meta['path'] : null);
 
-        if ($base && Str::startsWith($base, '/storage/')) {
-            $relativeFolder = dirname(Str::after($base, '/storage/'));
-            Storage::disk('public')->deleteDirectory($relativeFolder);
+        if ($relative) {
+            Storage::disk('public')->deleteDirectory(dirname($relative));
 
             return;
         }
 
-        if ($post->image && Str::startsWith($post->image, '/storage/')) {
-            $relative = Str::after($post->image, '/storage/');
-            Storage::disk('public')->delete($relative);
-        }
+        Storage::disk('public')->deleteDirectory(PostImageStorage::folder($post->slug));
     }
 }

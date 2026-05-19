@@ -9,10 +9,7 @@ use App\Services\PublicStoragePublisher;
 use Illuminate\Console\Command;
 
 /**
- * Alinha image e image_meta de cada post com os arquivos reais em storage/app/public.
- * Remove referências quebradas (404) quando o arquivo não existe no disco.
- *
- * Uso: php artisan posts:reconcile-images
+ * Alinha image, image_filename e image_meta com os arquivos reais no disco.
  */
 class ReconcilePostImages extends Command
 {
@@ -25,38 +22,33 @@ class ReconcilePostImages extends Command
         $fixed = 0;
         $cleared = 0;
 
+        PublicStoragePublisher::publish();
+
         Post::query()
-            ->where(fn ($q) => $q->whereNotNull('image')->orWhereNotNull('image_meta'))
             ->orderBy('id')
             ->each(function (Post $post) use (&$fixed, &$cleared) {
-                $beforeImage = $post->image;
-                $url = PostImageStorage::resolveDisplayUrl($post->slug, $post->image, $post->image_meta);
+                PostImageStorage::relocateLegacyFiles($post->slug);
 
-                if (! $url) {
-                    if ($beforeImage || $post->image_meta) {
-                        $post->image = null;
-                        $post->image_meta = null;
+                $beforeImage = $post->image;
+                PostImageStorage::applyRecord($post);
+
+                if (! $post->image) {
+                    if ($beforeImage || $post->image_meta || $post->image_filename) {
                         $post->save();
                         $cleared++;
-                        $this->line("  limpo: {$post->slug} (arquivo ausente)");
+                        $this->line("  limpo: {$post->slug}");
                     }
 
                     return;
                 }
 
-                $meta = PostImageStorage::metaFromDisk($post->slug)
-                    ?? (is_array($post->image_meta) ? $post->image_meta : []);
-
-                if ($post->image !== $url || $post->image_meta !== $meta) {
-                    $post->image = $url;
-                    $post->image_meta = $meta;
+                if ($post->isDirty()) {
                     $post->save();
                     $fixed++;
-                    $this->line("  ok: {$post->slug} → {$url}");
+                    $this->line("  ok: {$post->slug} → {$post->image_filename}");
                 }
             });
 
-        PublicStoragePublisher::publish();
         ContentCache::flushAll();
 
         $this->info("Concluído: {$fixed} atualizado(s), {$cleared} referência(s) removida(s). Cache HTML limpo.");

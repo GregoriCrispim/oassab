@@ -16,6 +16,7 @@ class Post extends Model
         'body',
         'date',
         'image',
+        'image_filename',
         'image_meta',
         'is_published',
     ];
@@ -30,16 +31,23 @@ class Post extends Model
     }
 
     /**
-     * Retorna um array pronto para o componente <x-responsive-image>.
-     *
-     * - Se houver image_meta (gerado pelo ImageOptimizer), monta srcset
-     *   com WebP + JPG nas larguras geradas.
-     * - Caso contrário, faz fallback para o caminho legado em $image.
-     *
-     * @return array{src:string, webp_srcset:?string, jpg_srcset:?string, width:?int, height:?int, base:?string}
+     * URL da capa — usa o caminho salvo em posts.image (nome real do arquivo).
      */
     public function coverImageUrl(): ?string
     {
+        if ($this->image && PostImageStorage::existsPublicUrl($this->image)) {
+            return $this->image;
+        }
+
+        if ($this->image_filename) {
+            $fromFilename = PostImageStorage::publicUrl(
+                PostImageStorage::folder($this->slug).'/'.$this->image_filename
+            );
+            if (PostImageStorage::existsPublicUrl($fromFilename)) {
+                return $fromFilename;
+            }
+        }
+
         return PostImageStorage::resolveDisplayUrl(
             $this->slug,
             $this->image,
@@ -47,12 +55,14 @@ class Post extends Model
         );
     }
 
+    /**
+     * @return array{src:string, webp_srcset:?string, jpg_srcset:?string, width:?int, height:?int, base:?string}
+     */
     public function imageSet(): array
     {
-        return PostImageStorage::safeImageSet(
-            $this->slug,
-            $this->image,
-            $this->image_meta
+        return PostImageStorage::imageSetForPost(
+            $this->coverImageUrl(),
+            is_array($this->image_meta) ? $this->image_meta : null
         );
     }
 
