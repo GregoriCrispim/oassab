@@ -145,6 +145,68 @@
 
                 form?.addEventListener('submit', () => normalizeSlugInput(input));
             });
+
+            document.querySelectorAll('[data-image-preview-input]').forEach((input) => {
+                const form = input.closest('form');
+                const box = form?.querySelector('[data-image-preview-box]');
+                const img = form?.querySelector('[data-image-preview-img]');
+                const label = form?.querySelector('[data-image-preview-label]');
+                const removeCheckbox = form?.querySelector('[data-image-preview-remove]');
+                const existingSrc = input.dataset.existingSrc || '';
+
+                if (! box || ! img) {
+                    return;
+                }
+
+                const showPreview = (src, labelText) => {
+                    if (! src) {
+                        return;
+                    }
+                    img.src = src;
+                    img.hidden = false;
+                    box.classList.remove('hidden');
+                    if (label && labelText) {
+                        label.textContent = labelText;
+                    }
+                };
+
+                const hidePreview = () => {
+                    img.src = '';
+                    img.hidden = true;
+                    box.classList.add('hidden');
+                };
+
+                input.addEventListener('change', () => {
+                    const file = input.files?.[0];
+                    if (! file) {
+                        if (existingSrc && ! removeCheckbox?.checked) {
+                            showPreview(existingSrc, 'Imagem atual');
+                        } else {
+                            hidePreview();
+                        }
+                        return;
+                    }
+
+                    if (! file.type.startsWith('image/')) {
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        showPreview(event.target?.result, 'Nova imagem (pré-visualização)');
+                    };
+                    reader.readAsDataURL(file);
+                });
+
+                removeCheckbox?.addEventListener('change', () => {
+                    if (removeCheckbox.checked) {
+                        hidePreview();
+                        input.value = '';
+                    } else if (existingSrc) {
+                        showPreview(existingSrc, 'Imagem atual');
+                    }
+                });
+            });
         });
     </script>
 

@@ -151,20 +151,32 @@
             <div class="rounded-2xl border border-oassab-border bg-white p-6 shadow-sm">
                 <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-oassab-blue">Capa</p>
 
+                <div data-image-preview-box
+                     class="mb-4 overflow-hidden rounded-xl border border-oassab-border bg-oassab-cream/50 {{ $post->image ? '' : 'hidden' }}">
+                    <p class="border-b border-oassab-border bg-white px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-oassab-gray">
+                        <span data-image-preview-label>{{ $post->image ? 'Imagem atual' : 'Pré-visualização' }}</span>
+                    </p>
+                    <img data-image-preview-img
+                         src="{{ $post->image ?? '' }}"
+                         alt="Pré-visualização da capa"
+                         class="h-48 w-full object-cover"
+                         @if (! $post->image) hidden @endif>
+                </div>
+
                 @if ($post->image)
-                    <div class="mb-3 overflow-hidden rounded-lg border border-oassab-border">
-                        <img src="{{ $post->image }}" alt="" class="h-40 w-full object-cover">
-                    </div>
                     <label class="mb-3 flex items-center gap-2 text-sm text-oassab-gray">
                         <input type="checkbox" name="remove_image" value="1"
+                               data-image-preview-remove
                                class="h-4 w-4 rounded border-oassab-border text-red-500 focus:ring-red-500">
                         Remover imagem atual
                     </label>
                 @endif
 
                 <input type="file" name="image" accept="image/png,image/jpeg,image/webp"
+                       data-image-preview-input
+                       data-existing-src="{{ $post->image ?? '' }}"
                        class="block w-full text-xs text-oassab-gray file:mr-3 file:rounded-full file:border-0 file:bg-oassab-blue file:px-4 file:py-2 file:text-xs file:font-semibold file:uppercase file:tracking-wider file:text-white hover:file:bg-oassab-orange">
-                <p class="mt-2 text-xs text-oassab-gray">JPG, PNG ou WEBP — até 4 MB.</p>
+                <p class="mt-2 text-xs text-oassab-gray">JPG, PNG ou WEBP — até 4 MB. A pré-visualização aparece ao selecionar o arquivo.</p>
             </div>
 
             <div class="flex flex-col gap-2">
