@@ -35,11 +35,17 @@ app/
 database/
   migrations/                     # categories, posts, category_post, is_admin
   seeders/                        # CategoriesSeeder, PostsSeeder, AdminUserSeeder
-public/
-  storage -> storage/app/public   # criado por php artisan storage:link
-  images/                         # logo, ícone, hero, fundos e capas iniciais
+public/                           # versionado no Git e enviado no deploy (FTP)
+  storage -> storage/app/public   # symlink (não versionado; criar no servidor com storage:link)
+  images/                         # logo, ícone, hero, fundos e capas legadas
   files/                          # PDFs dos relatórios
   favicon.ico
+  build/                          # gerado no CI (npm run build), não commitado
+storage/app/public/
+  posts/          # capas de notícias/projetos (JPG/PNG/WEBP)
+  editais/        # PDF principal + anexos do Programa Edital Aberto
+  transparency/   # PDFs do Portal Transparência
+  (tudo acima versionado no Git; ver deploy abaixo)
 resources/
   css/app.css
   js/site.js, app.js
@@ -204,7 +210,8 @@ Senha:  OASSAB@2026
 3. Em cada post você define:
    - Título, slug (auto se vazio), data, resumo e corpo (editor Quill).
    - **Categorias** — marque uma ou mais entre **Notícias**, **Projetos** e **Portal Transparência**. O mesmo post pode aparecer em mais de uma categoria simultaneamente.
-   - Capa (JPG/PNG/WEBP, até 4 MB) — fica em `storage/app/public/posts/`.
+   - Capa (JPG/PNG/WEBP, até 4 MB) — fica em `storage/app/public/posts/{slug}/`.
+   - Após qualquer upload no admin, **commit** a pasta correspondente em `storage/app/public/` antes do deploy (ver item 5 em “Notas para deploy”).
    - Status **publicado** (visível no site) ou rascunho.
 
 Posts publicados aparecem automaticamente em:
@@ -258,14 +265,25 @@ php artisan images:optimize
    - `APP_ENV=production`
    - `APP_DEBUG=false`
    - `CACHE_STORE=file` e `SESSION_DRIVER=file` (HostGator não tem Redis; o driver `database` deixa o site lento porque toda request vai ao MySQL remoto).
-4. Rode `php artisan storage:link` (ou crie symlink `public/storage -> storage/app/public`).
-5. Primeira vez:
+4. Rode `php artisan storage:link` (ou crie symlink `public/storage -> storage/app/public`). Sem esse link, URLs `/storage/posts/...` retornam 404 mesmo com os arquivos no disco.
+5. **Arquivos enviados pelo admin** (não vão sozinhos para produção — é preciso commit + push):
+   | Tipo | Pasta no Git |
+   |------|----------------|
+   | Capa de post | `storage/app/public/posts/{slug}/` |
+   | PDF do edital (+ anexos) | `storage/app/public/editais/{slug}/` |
+   | PDF do Portal Transparência | `storage/app/public/transparency/{slug}/` |
+   ```bash
+   git add storage/app/public/
+   git commit -m "Atualiza arquivos do storage público"
+   git push
+   ```
+6. Primeira vez:
    ```bash
    php artisan migrate --force
    php artisan db:seed --force
    php artisan images:optimize
    ```
-6. Sempre que atualizar código:
+7. Sempre que atualizar código:
    ```bash
    composer install --no-dev --optimize-autoloader
    php artisan optimize:clear
@@ -274,7 +292,7 @@ php artisan images:optimize
    php artisan view:cache
    php artisan event:cache
    ```
-7. Troque a senha do admin imediatamente após o primeiro login.
+8. Troque a senha do admin imediatamente após o primeiro login.
 
 ## Como rodar em desenvolvimento
 
