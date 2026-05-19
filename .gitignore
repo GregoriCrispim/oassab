@@ -21,3 +21,5 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+# Gerado apenas no CI antes do FTP; não versionar (confirma em qual pasta o deploy cai).
+.deploy-revision

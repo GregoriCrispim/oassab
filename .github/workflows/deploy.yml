@@ -20,13 +20,25 @@ jobs:
           test -d public
           echo "Deploy payload ready."
 
+      # Arquivo sempre muda a cada execução: procure por ele no gerenciador de arquivos.
+      # - Se aparecer na raiz do public_html esperado → o usuário FTP + server-dir está certo.
+      # - Se NÃO aparecer onde você espera → o FTP do GitHub (secrets) provavelmente cai OUTRO diretório (conta/caminho errado na Hostgator).
+      - name: Marca de deploy (.deploy-revision)
+        run: |
+          printf 'run=%s\nsha=%s\nat_utc=%s\n' \
+            '${{ github.run_id }}' \
+            '${{ github.sha }}' \
+            "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+            > .deploy-revision
+
       - name: Sync files via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          # Esta conta FTP foi criada já com diretório = public_html: server-dir deve ser ./ (senão criava public_html/public_html/).
+          # Conta FTP com diretório inicial = document root → use ./ (public_html/public_html aparece se usar public_html/).
+          # O ftp-deploy só altera/arquiva conforme árvore do repositório: NÃO apaga uma pasta duplicada sobrando no servidor (ex.: public_html/public_html).
           server-dir: ./
           protocol: ftps
           port: 21
