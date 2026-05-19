@@ -36,7 +36,7 @@ database/
   migrations/                     # categories, posts, category_post, is_admin
   seeders/                        # CategoriesSeeder, PostsSeeder, AdminUserSeeder
 public/                           # versionado no Git e enviado no deploy (FTP)
-  storage -> storage/app/public   # symlink (não versionado; criar no servidor com storage:link)
+  storage/                        # espelho de storage/app/public (php artisan storage:publish)
   images/                         # logo, ícone, hero, fundos e capas legadas
   files/                          # PDFs dos relatórios
   favicon.ico
@@ -111,7 +111,7 @@ php artisan key:generate
 # Configure DB_HOST/DB_DATABASE/DB_USERNAME/DB_PASSWORD no .env
 php artisan migrate --force
 php artisan db:seed --force        # importa as categorias, 30 posts iniciais e o admin padrão
-php artisan storage:link
+php artisan storage:publish      # espelha uploads em public/storage/ (igual ao deploy)
 
 # Em uma aba:
 npm run dev
@@ -158,7 +158,7 @@ No **servidor** (produção), use `DB_HOST=localhost` com o mesmo banco/usuário
 php artisan config:clear
 php artisan migrate --force
 php artisan db:seed --force
-php artisan storage:link
+php artisan storage:publish
 ```
 
 Isso cria `users`, `posts`, `categories`, etc., e o admin padrão (`admin@oassab.org.br` / `OASSAB@2026`).
@@ -243,7 +243,7 @@ npm run build
 
 composer install --no-dev --optimize-autoloader
 php artisan migrate --force
-php artisan storage:link
+php artisan storage:publish
 
 # Caches do Laravel
 php artisan config:cache
@@ -265,8 +265,13 @@ php artisan images:optimize
    - `APP_ENV=production`
    - `APP_DEBUG=false`
    - `CACHE_STORE=file` e `SESSION_DRIVER=file` (HostGator não tem Redis; o driver `database` deixa o site lento porque toda request vai ao MySQL remoto).
-4. Rode `php artisan storage:link` (ou crie symlink `public/storage -> storage/app/public`). Sem esse link, URLs `/storage/posts/...` retornam 404 mesmo com os arquivos no disco.
-5. **Arquivos enviados pelo admin** (não vão sozinhos para produção — é preciso commit + push):
+4. **Arquivos públicos (local = servidor):** tudo fica em `storage/app/public/`; a URL no site é sempre `/storage/...` (mesmo caminho relativo). O admin já roda `storage:publish` após cada upload; o deploy FTP copia o mesmo espelho para `public/storage/`. **Não use** `php artisan storage:link`.
+5. Se no servidor existirem arquivos antigos fora de `posts/{slug}/`:
+   ```bash
+   php artisan posts:normalize-storage
+   php artisan posts:reconcile-images
+   ```
+6. **Arquivos enviados pelo admin** (commit + push antes do deploy):
    | Tipo | Pasta no Git |
    |------|----------------|
    | Capa de post | `storage/app/public/posts/{slug}/` |
@@ -277,13 +282,13 @@ php artisan images:optimize
    git commit -m "Atualiza arquivos do storage público"
    git push
    ```
-6. Primeira vez:
+7. Primeira vez:
    ```bash
    php artisan migrate --force
    php artisan db:seed --force
    php artisan images:optimize
    ```
-7. Sempre que atualizar código:
+8. Sempre que atualizar código:
    ```bash
    composer install --no-dev --optimize-autoloader
    php artisan optimize:clear
@@ -292,7 +297,7 @@ php artisan images:optimize
    php artisan view:cache
    php artisan event:cache
    ```
-8. Troque a senha do admin imediatamente após o primeiro login.
+9. Troque a senha do admin imediatamente após o primeiro login.
 
 ## Como rodar em desenvolvimento
 

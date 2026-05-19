@@ -1,0 +1,9 @@
+# Ignora tudo nesta pasta, exceto uploads do admin (versionados no Git).
+*
+!.gitignore
+!posts/
+!posts/**/*
+!editais/
+!editais/**/*
+!transparency/
+!transparency/**/*

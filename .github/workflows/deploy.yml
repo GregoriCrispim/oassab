@@ -29,6 +29,13 @@ jobs:
       - name: Build frontend assets
         run: npm ci && npm run build
 
+      # Mesmo que `php artisan storage:publish` (local = produção)
+      - name: Publish public storage
+        run: |
+          rm -rf public/storage
+          mkdir -p public/storage
+          cp -a storage/app/public/. public/storage/
+
       - name: Sync files via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:

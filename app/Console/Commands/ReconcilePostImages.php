@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Post;
 use App\Services\PostImageStorage;
+use App\Services\PublicStoragePublisher;
 use Illuminate\Console\Command;
 
 /**
@@ -54,7 +55,9 @@ class ReconcilePostImages extends Command
                 }
             });
 
-        $this->info("Concluído: {$fixed} atualizado(s), {$cleared} referência(s) removida(s).");
+        PublicStoragePublisher::publish();
+
+        $this->info("Concluído: {$fixed} atualizado(s), {$cleared} referência(s) removida(s). public/storage republicado.");
 
         return self::SUCCESS;
     }

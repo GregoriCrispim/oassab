@@ -2,7 +2,7 @@
 /node_modules
 /public/build
 /public/hot
-/public/storage
+/public/storage   # espelho de storage/app/public (gerado por storage:publish e pelo deploy)
 /storage/*.key
 /storage/pail
 /vendor

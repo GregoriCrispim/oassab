@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Post;
 use App\Services\ImageOptimizer;
 use App\Services\PostImageStorage;
+use App\Services\PublicStoragePublisher;
 use App\Support\UploadedFileHelper;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -83,6 +84,8 @@ class PostController extends Controller
             $this->reconcileAndPersistImage($post);
         }
 
+        $this->publishPublicStorage();
+
         return redirect()
             ->route('admin.posts.index')
             ->with('status', 'Post criado com sucesso.');
@@ -138,6 +141,8 @@ class PostController extends Controller
             $this->reconcileAndPersistImage($post);
         }
 
+        $this->publishPublicStorage();
+
         return redirect()
             ->route('admin.posts.index')
             ->with('status', 'Post atualizado com sucesso.');
@@ -147,6 +152,7 @@ class PostController extends Controller
     {
         $this->purgeImageAssets($post);
         $post->delete();
+        $this->publishPublicStorage();
 
         return redirect()
             ->route('admin.posts.index')
@@ -206,6 +212,11 @@ class PostController extends Controller
         }
 
         $post->save();
+    }
+
+    private function publishPublicStorage(): void
+    {
+        PublicStoragePublisher::publish();
     }
 
     private function purgeImageAssets(Post $post): void

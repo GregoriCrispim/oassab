@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreEditalRequest;
 use App\Models\Edital;
 use App\Models\EditalAttachment;
+use App\Services\PublicStoragePublisher;
 use App\Support\UploadedFileHelper;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -56,6 +57,7 @@ class EditalController extends Controller
 
         $edital->save();
         $this->syncAttachments($request, $edital);
+        PublicStoragePublisher::publish();
 
         return redirect()
             ->route('admin.editais.index')
@@ -90,6 +92,7 @@ class EditalController extends Controller
         $edital->save();
         $this->removeMarkedAttachments($request, $edital);
         $this->syncAttachments($request, $edital);
+        PublicStoragePublisher::publish();
 
         return redirect()
             ->route('admin.editais.index')
@@ -100,6 +103,7 @@ class EditalController extends Controller
     {
         $this->purgeAllFiles($edital);
         $edital->delete();
+        PublicStoragePublisher::publish();
 
         return redirect()
             ->route('admin.editais.index')

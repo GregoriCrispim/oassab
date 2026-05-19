@@ -32,8 +32,6 @@ class PostImageStorage
     }
 
     /**
-     * Após o upload, garante que image + meta apontam apenas para arquivos que existem no disco.
-     *
      * @param  array<string, mixed>  $meta
      * @return array{0: string, 1: array<string, mixed>}
      */
@@ -77,9 +75,6 @@ class PostImageStorage
         throw new \RuntimeException('A imagem não foi gravada em storage. Verifique permissões em storage/app/public.');
     }
 
-    /**
-     * URL pública da capa, mesmo que o caminho salvo no banco esteja desatualizado.
-     */
     public static function resolveDisplayUrl(string $slug, ?string $storedImage, ?array $meta): ?string
     {
         if ($storedImage && self::existsPublicUrl($storedImage)) {
@@ -149,6 +144,7 @@ class PostImageStorage
         $folder = self::folder($slug);
         $defaultExt = $meta['ext_default'] ?? 'jpg';
         $widths = ! empty($meta['widths']) ? $meta['widths'] : self::scanVariantWidths($folder, $slug);
+        $base = $meta['base'] ?? '/storage/'.$folder.'/'.$slug;
 
         if ($widths === []) {
             return [
@@ -157,11 +153,10 @@ class PostImageStorage
                 'jpg_srcset' => null,
                 'width' => isset($meta['width']) ? (int) $meta['width'] : null,
                 'height' => isset($meta['height']) ? (int) $meta['height'] : null,
-                'base' => $meta['base'] ?? null,
+                'base' => $base,
             ];
         }
 
-        $base = $meta['base'] ?? '/storage/'.$folder.'/'.$slug;
         $existingWidths = collect($widths)->filter(function ($w) use ($folder, $slug, $defaultExt) {
             return self::disk()->exists($folder.'/'.$slug.'-'.$w.'.'.$defaultExt)
                 || self::disk()->exists($folder.'/'.$slug.'-'.$w.'.jpg');
@@ -180,7 +175,7 @@ class PostImageStorage
 
         $jpg = collect($existingWidths)
             ->map(function ($w) use ($base, $slug, $folder, $defaultExt) {
-                $ext = self::disk()->exists(self::folder($slug).'/'.$slug.'-'.$w.'.'.$defaultExt)
+                $ext = self::disk()->exists($folder.'/'.$slug.'-'.$w.'.'.$defaultExt)
                     ? $defaultExt
                     : 'jpg';
 
@@ -204,8 +199,6 @@ class PostImageStorage
     }
 
     /**
-     * Reconstrói image_meta a partir dos arquivos existentes no disco.
-     *
      * @return array<string, mixed>|null
      */
     public static function metaFromDisk(string $slug): ?array
