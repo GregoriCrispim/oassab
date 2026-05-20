@@ -6,16 +6,20 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreEditalRequest;
 use App\Models\Edital;
 use App\Models\EditalAttachment;
+use App\Services\EditalFileStorage;
 use App\Support\UploadedFileHelper;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class EditalController extends Controller
 {
+    public function __construct(
+        private readonly EditalFileStorage $files,
+    ) {}
+
     public function index(Request $request): View
     {
         $query = Edital::query()->withCount('attachments')->ordered();
@@ -51,7 +55,7 @@ class EditalController extends Controller
         $edital = new Edital($request->payload());
 
         if (UploadedFileHelper::valid($request, 'file')) {
-            $this->storeMainPdf($request->file('file'), $edital);
+            $this->files->storeMainPdf($request->file('file'), $edital);
         }
 
         $edital->save();
@@ -74,17 +78,18 @@ class EditalController extends Controller
         $oldSlug = $edital->slug;
         $edital->fill($request->payload());
 
-        if ($request->boolean('remove_file') && $edital->file_path) {
-            $this->deleteMainPdf($edital);
+        if ($request->boolean('remove_file') && $edital->hasMainFile()) {
+            $this->files->deleteMain($edital);
             $edital->file_path = null;
+            $edital->drive_file_id = null;
             $edital->original_filename = null;
         }
 
         if (UploadedFileHelper::valid($request, 'file')) {
-            $this->deleteMainPdf($edital);
-            $this->storeMainPdf($request->file('file'), $edital);
-        } elseif ($oldSlug !== $edital->slug) {
-            $this->renameStorageFolder($edital, $oldSlug);
+            $this->files->deleteMain($edital);
+            $this->files->storeMainPdf($request->file('file'), $edital);
+        } elseif ($oldSlug !== $edital->slug && ! $this->files->usesGoogleDrive()) {
+            $this->files->renameLocalFolder($edital, $oldSlug);
         }
 
         $edital->save();
@@ -106,58 +111,20 @@ class EditalController extends Controller
             ->with('status', 'Edital excluído.');
     }
 
-    private function storeMainPdf(UploadedFile $file, Edital $edital): void
-    {
-        $relativePath = Storage::disk('public')->putFileAs(
-            'editais/'.$edital->slug,
-            $file,
-            $edital->slug.'.pdf'
-        );
-
-        if (! $relativePath) {
-            throw new \RuntimeException('Não foi possível salvar o PDF do edital.');
-        }
-
-        $edital->file_path = '/storage/'.$relativePath;
-        $edital->original_filename = $file->getClientOriginalName();
-    }
-
-    private function deleteMainPdf(Edital $edital): void
-    {
-        if (! $edital->file_path || ! Str::startsWith($edital->file_path, '/storage/')) {
-            return;
-        }
-
-        $relative = Str::after($edital->file_path, '/storage/');
-        Storage::disk('public')->delete($relative);
-    }
-
     private function purgeAllFiles(Edital $edital): void
     {
-        Storage::disk('public')->deleteDirectory('editais/'.$edital->slug);
-    }
+        $edital->load('attachments');
 
-    private function renameStorageFolder(Edital $edital, string $oldSlug): void
-    {
-        $oldFolder = 'editais/'.$oldSlug;
-        $newFolder = 'editais/'.$edital->slug;
-
-        if (! Storage::disk('public')->exists($oldFolder)) {
-            return;
-        }
-
-        Storage::disk('public')->move($oldFolder, $newFolder);
-
-        if ($edital->file_path) {
-            $edital->file_path = '/storage/'.$newFolder.'/'.$edital->slug.'.pdf';
+        if ($edital->hasMainFile()) {
+            $this->files->deleteMain($edital);
         }
 
         foreach ($edital->attachments as $attachment) {
-            if (Str::startsWith($attachment->file_path, '/storage/')) {
-                $relative = Str::after($attachment->file_path, '/storage/');
-                $newRelative = preg_replace('#^editais/'.preg_quote($oldSlug, '#').'#', 'editais/'.$edital->slug, $relative);
-                $attachment->update(['file_path' => '/storage/'.$newRelative]);
-            }
+            $this->files->deleteAttachment($attachment);
+        }
+
+        if (! $this->files->usesGoogleDrive()) {
+            $this->files->purgeAllLocal($edital);
         }
     }
 
@@ -173,7 +140,7 @@ class EditalController extends Controller
             ->whereIn('id', $ids)
             ->get()
             ->each(function (EditalAttachment $attachment) {
-                $this->deleteAttachmentFile($attachment);
+                $this->files->deleteAttachment($attachment);
                 $attachment->delete();
             });
     }
@@ -191,32 +158,15 @@ class EditalController extends Controller
 
             $title = trim((string) ($titles[$index] ?? '')) ?: $file->getClientOriginalName();
             $storedName = Str::uuid()->toString().'.pdf';
-            $relativePath = Storage::disk('public')->putFileAs(
-                'editais/'.$edital->slug.'/anexos',
-                $file,
-                $storedName
-            );
-
-            if (! $relativePath) {
-                continue;
-            }
+            $stored = $this->files->storeAttachmentPdf($file, $edital, $storedName);
 
             $edital->attachments()->create([
                 'title' => $title,
-                'file_path' => '/storage/'.$relativePath,
+                'file_path' => $stored['file_path'],
+                'drive_file_id' => $stored['drive_file_id'],
                 'original_filename' => $file->getClientOriginalName(),
                 'sort_order' => ++$maxSort,
             ]);
         }
-    }
-
-    private function deleteAttachmentFile(EditalAttachment $attachment): void
-    {
-        if (! $attachment->file_path || ! Str::startsWith($attachment->file_path, '/storage/')) {
-            return;
-        }
-
-        $relative = Str::after($attachment->file_path, '/storage/');
-        Storage::disk('public')->delete($relative);
     }
 }

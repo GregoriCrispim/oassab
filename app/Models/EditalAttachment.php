@@ -11,6 +11,7 @@ class EditalAttachment extends Model
         'edital_id',
         'title',
         'file_path',
+        'drive_file_id',
         'original_filename',
         'sort_order',
     ];
@@ -25,5 +26,22 @@ class EditalAttachment extends Model
     public function edital(): BelongsTo
     {
         return $this->belongsTo(Edital::class);
+    }
+
+    public function hasFile(): bool
+    {
+        return filled($this->drive_file_id) || filled($this->file_path);
+    }
+
+    public function downloadUrl(): ?string
+    {
+        if ($this->drive_file_id) {
+            return route('editais.files.attachment', [
+                'edital' => $this->edital,
+                'attachment' => $this,
+            ]);
+        }
+
+        return $this->file_path ?: null;
     }
 }

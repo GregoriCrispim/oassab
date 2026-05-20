@@ -11,6 +11,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CategoriesSeeder::class,
             PostsSeeder::class,
+            EditalInternoOassab2026Seeder::class,
             AdminUserSeeder::class,
         ]);
     }

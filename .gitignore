@@ -4,6 +4,7 @@
 /public/hot
 /public/storage   # espelho de storage/app/public (gerado por storage:publish e pelo deploy)
 /storage/*.key
+/storage/app/google-drive-credentials.json
 /storage/pail
 /vendor
 .env

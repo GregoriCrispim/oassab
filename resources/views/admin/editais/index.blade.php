@@ -43,13 +43,13 @@
                         </td>
                         <td class="px-4 py-3 text-oassab-gray">{{ $edital->date?->format('d/m/Y') }}</td>
                         <td class="px-4 py-3 text-oassab-gray">
-                            @if ($edital->file_path)
+                            @if ($edital->hasMainFile())
                                 <span class="mr-1 inline-block rounded-full bg-oassab-blue/5 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-oassab-blue">Principal</span>
                             @endif
                             @if ($edital->attachments_count > 0)
                                 <span class="inline-block rounded-full bg-oassab-orange/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-oassab-orange">{{ $edital->attachments_count }} anexo(s)</span>
                             @endif
-                            @if (! $edital->file_path && $edital->attachments_count === 0)
+                            @if (! $edital->hasMainFile() && $edital->attachments_count === 0)
                                 —
                             @endif
                         </td>

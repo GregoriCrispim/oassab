@@ -17,6 +17,7 @@ class Edital extends Model
         'body',
         'date',
         'file_path',
+        'drive_file_id',
         'original_filename',
         'sort_order',
         'is_published',
@@ -54,6 +55,20 @@ class Edital extends Model
     public function formattedDate(): string
     {
         return Post::formatDate($this->date?->toDateString() ?? '');
+    }
+
+    public function hasMainFile(): bool
+    {
+        return filled($this->drive_file_id) || filled($this->file_path);
+    }
+
+    public function mainFileUrl(): ?string
+    {
+        if ($this->drive_file_id) {
+            return route('editais.files.main', $this);
+        }
+
+        return $this->file_path ?: null;
     }
 
     public function previous(): ?self

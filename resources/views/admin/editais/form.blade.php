@@ -94,12 +94,16 @@
 
             <div class="rounded-2xl border border-oassab-border bg-white p-6 shadow-sm">
                 <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-oassab-blue">PDF do edital</p>
-                <p class="mb-3 text-xs text-oassab-gray">Documento principal do edital (opcional).</p>
+                <p class="mb-3 text-xs text-oassab-gray">Documento principal do edital (opcional).
+                    @if (app(\App\Services\GoogleDriveService::class)->isConfigured())
+                        Os PDFs são armazenados no Google Drive.
+                    @endif
+                </p>
 
-                @if ($isEditing && $edital->file_path)
+                @if ($isEditing && $edital->hasMainFile())
                     <p class="mb-3 text-sm text-oassab-gray">
                         Atual:
-                        <a href="{{ $edital->file_path }}" target="_blank" rel="noopener" class="font-semibold text-oassab-orange hover:underline">
+                        <a href="{{ $edital->mainFileUrl() }}" target="_blank" rel="noopener" class="font-semibold text-oassab-orange hover:underline">
                             {{ $edital->original_filename ?: 'Ver PDF' }}
                         </a>
                     </p>
@@ -134,7 +138,7 @@
                                        class="mt-1 h-4 w-4 rounded border-oassab-border text-red-500 focus:ring-red-500">
                                 <span class="flex-1 text-oassab-blue">
                                     {{ $attachment->title }}
-                                    <a href="{{ $attachment->file_path }}" target="_blank" rel="noopener" class="ml-1 text-xs text-oassab-orange hover:underline">(ver)</a>
+                                    <a href="{{ route('editais.files.attachment', [$edital, $attachment]) }}" target="_blank" rel="noopener" class="ml-1 text-xs text-oassab-orange hover:underline">(ver)</a>
                                 </span>
                             </label>
                         @endforeach

@@ -18,7 +18,7 @@
                 <p class="mt-2 line-clamp-3 text-sm text-oassab-gray">{{ $edital->excerpt }}</p>
             @endif
             @php
-                $pdfCount = ($edital->file_path ? 1 : 0) + ($edital->attachments_count ?? $edital->attachments?->count() ?? 0);
+                $pdfCount = ($edital->hasMainFile() ? 1 : 0) + ($edital->attachments_count ?? $edital->attachments?->count() ?? 0);
             @endphp
             @if ($pdfCount > 0)
                 <p class="mt-3 text-xs font-semibold uppercase tracking-wider text-oassab-gray">

@@ -43,10 +43,10 @@
                 </div>
 
                 <aside class="space-y-6">
-                    @if ($edital->file_path)
+                    @if ($edital->hasMainFile())
                         <div class="rounded-3xl border border-oassab-border bg-oassab-cream p-6">
                             <h3 class="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-oassab-orange">Edital (PDF)</h3>
-                            <a href="{{ $edital->file_path }}" target="_blank" rel="noopener"
+                            <a href="{{ $edital->mainFileUrl() }}" target="_blank" rel="noopener"
                                class="group flex items-center gap-4 rounded-2xl border border-oassab-border bg-white p-4 transition hover:border-oassab-orange/40 hover:shadow-md">
                                 <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-oassab-orange text-white">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="h-6 w-6" aria-hidden="true">
@@ -69,7 +69,7 @@
                             <ul class="space-y-3">
                                 @foreach ($edital->attachments as $attachment)
                                     <li>
-                                        <a href="{{ $attachment->file_path }}" target="_blank" rel="noopener"
+                                        <a href="{{ route('editais.files.attachment', [$edital, $attachment]) }}" target="_blank" rel="noopener"
                                            class="group flex items-center gap-3 rounded-2xl border border-oassab-border bg-white p-3 transition hover:border-oassab-orange/40 hover:shadow-sm">
                                             <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-oassab-blue/10 text-oassab-blue">
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="h-5 w-5" aria-hidden="true">

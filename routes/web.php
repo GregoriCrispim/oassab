@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\EditalController;
 use App\Http\Controllers\Admin\TransparencyDocumentController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\EditalFileController;
 use App\Http\Controllers\PageController;
 use Illuminate\Support\Facades\Route;
 
@@ -17,6 +18,9 @@ Route::middleware('page.cache')->group(function () {
     Route::get('/quem-somos', [PageController::class, 'quemSomos'])->name('quem-somos');
     Route::get('/projetos', [PageController::class, 'projetos'])->name('projetos');
     Route::get('/editais', [PageController::class, 'editais'])->name('editais');
+    Route::get('/editais/{edital:slug}/download', [EditalFileController::class, 'main'])->name('editais.files.main');
+    Route::get('/editais/{edital:slug}/anexos/{attachment}/download', [EditalFileController::class, 'attachment'])
+        ->name('editais.files.attachment');
     Route::get('/editais/{edital:slug}', [PageController::class, 'edital'])->name('edital');
     Route::get('/transparencia', [PageController::class, 'transparencia'])->name('transparencia');
     Route::get('/contato', [PageController::class, 'contato'])->name('contato');
@@ -53,8 +57,12 @@ Route::middleware(['auth', 'admin'])
         Route::post('transparency-documents/{transparency_document}', [TransparencyDocumentController::class, 'update'])
             ->name('transparency-documents.update');
 
-        Route::resource('editais', EditalController::class)->except(['show', 'update']);
+        Route::get('editais', [EditalController::class, 'index'])->name('editais.index');
+        Route::get('editais/create', [EditalController::class, 'create'])->name('editais.create');
+        Route::post('editais', [EditalController::class, 'store'])->name('editais.store');
+        Route::get('editais/{edital}/edit', [EditalController::class, 'edit'])->name('editais.edit');
         Route::post('editais/{edital}', [EditalController::class, 'update'])->name('editais.update');
+        Route::delete('editais/{edital}', [EditalController::class, 'destroy'])->name('editais.destroy');
 
         Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
