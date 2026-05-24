@@ -12,6 +12,8 @@ class DatabaseSeeder extends Seeder
             CategoriesSeeder::class,
             PostsSeeder::class,
             EditalInternoOassab2026Seeder::class,
+            EditalInternoOassab2Seeder::class,
+            ComunicadoEditalInternoOassab2Seeder::class,
             AdminUserSeeder::class,
         ]);
     }
