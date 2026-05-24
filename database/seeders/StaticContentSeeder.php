@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 
-class DatabaseSeeder extends Seeder
+class StaticContentSeeder extends Seeder
 {
     public function run(): void
     {
@@ -13,7 +13,6 @@ class DatabaseSeeder extends Seeder
             PostsSeeder::class,
             EditalInternoOassab2026Seeder::class,
             EditalInternoOassab2Seeder::class,
-            AdminUserSeeder::class,
         ]);
     }
 }

@@ -36,6 +36,18 @@ jobs:
           mkdir -p public/storage
           cp -a storage/app/public/. public/storage/
 
+      - name: Sync static content (production database)
+        continue-on-error: true
+        run: php artisan static-content:sync
+        env:
+          APP_KEY: ${{ secrets.APP_KEY }}
+          DB_CONNECTION: mysql
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_DATABASE: ${{ secrets.DB_DATABASE }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
       - name: Sync files via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -51,3 +63,17 @@ jobs:
             **/.git*/**
             **/node_modules/**
             .github/**
+
+      - name: Clear production page cache (FTP)
+        if: always()
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+          lftp -e "
+            set ftp:ssl-force true;
+            set ssl:verify-certificate no;
+            open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_SERVER }};
+            cd storage/framework/cache/data;
+            glob -a rm -r *;
+            bye
+          "
+        continue-on-error: true
