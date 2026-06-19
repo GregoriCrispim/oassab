@@ -65,7 +65,25 @@
                 </div>
 
                 <aside class="space-y-6">
-                    @if ($post->edital)
+                    @if ($post->hasAttachment())
+                        <div class="rounded-3xl border border-oassab-border bg-oassab-cream p-6">
+                            <h3 class="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-oassab-orange">Documento</h3>
+                            <a href="{{ $post->attachmentUrl() }}"
+                               class="group flex items-center gap-4 rounded-2xl border border-oassab-border bg-white p-4 transition hover:border-oassab-orange/40 hover:shadow-md">
+                                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-oassab-orange text-white">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="h-6 w-6" aria-hidden="true">
+                                        <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/>
+                                    </svg>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="truncate text-sm font-semibold text-oassab-blue group-hover:text-oassab-orange">
+                                        {{ $post->attachment_original_filename ?: 'Baixar resultado' }}
+                                    </p>
+                                    <p class="text-xs text-oassab-gray">Clique para baixar</p>
+                                </div>
+                            </a>
+                        </div>
+                    @elseif ($post->edital)
                         <div class="rounded-3xl border border-oassab-border bg-oassab-cream p-6">
                             <h3 class="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-oassab-orange">Edital</h3>
                             <a href="{{ route('edital', $post->edital) }}"

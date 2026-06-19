@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\TransparencyDocumentController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\EditalFileController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\PostFileController;
 use Illuminate\Support\Facades\Route;
 
 // --------------------------------------------------------------------
@@ -26,6 +27,7 @@ Route::middleware('page.cache')->group(function () {
     Route::get('/contato', [PageController::class, 'contato'])->name('contato');
     Route::get('/noticias', [PageController::class, 'noticias'])->name('noticias');
     Route::get('/relatorios-de-atividades', [PageController::class, 'relatorios'])->name('relatorios');
+    Route::get('/posts/{post:slug}/download', [PostFileController::class, 'attachment'])->name('posts.files.attachment');
     Route::get('/posts/{slug}', [PageController::class, 'post'])->name('post');
 });
 

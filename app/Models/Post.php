@@ -19,6 +19,9 @@ class Post extends Model
         'edital_id',
         'image',
         'image_meta',
+        'attachment_file_path',
+        'attachment_drive_file_id',
+        'attachment_original_filename',
         'is_published',
     ];
 
@@ -66,6 +69,20 @@ class Post extends Model
     public function edital(): BelongsTo
     {
         return $this->belongsTo(Edital::class);
+    }
+
+    public function hasAttachment(): bool
+    {
+        return filled($this->attachment_drive_file_id) || filled($this->attachment_file_path);
+    }
+
+    public function attachmentUrl(): ?string
+    {
+        if (! $this->hasAttachment()) {
+            return null;
+        }
+
+        return route('posts.files.attachment', $this);
     }
 
     public function scopePublished(Builder $query): Builder
