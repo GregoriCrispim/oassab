@@ -65,6 +65,24 @@
                 </div>
 
                 <aside class="space-y-6">
+                    @if ($post->edital)
+                        <div class="rounded-3xl border border-oassab-border bg-oassab-cream p-6">
+                            <h3 class="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-oassab-orange">Edital</h3>
+                            <a href="{{ route('edital', $post->edital) }}"
+                               class="group flex items-center gap-4 rounded-2xl border border-oassab-border bg-white p-4 transition hover:border-oassab-orange/40 hover:shadow-md">
+                                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-oassab-blue text-white">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="h-6 w-6" aria-hidden="true">
+                                        <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/>
+                                    </svg>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-semibold text-oassab-blue group-hover:text-oassab-orange">Ver edital</p>
+                                    <p class="truncate text-xs text-oassab-gray">{{ $post->edital->title }}</p>
+                                </div>
+                            </a>
+                        </div>
+                    @endif
+
                     <div class="rounded-3xl border border-oassab-border bg-oassab-cream p-6">
                         <h3 class="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-oassab-orange">Compartilhar</h3>
                         <div class="flex flex-wrap gap-3">

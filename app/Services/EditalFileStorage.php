@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Models\Edital;
 use App\Models\EditalAttachment;
+use App\Support\MimeHelper;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -51,33 +53,74 @@ class EditalFileStorage
     /**
      * @return array{drive_file_id: ?string, file_path: string}
      */
-    public function storeAttachmentPdf(UploadedFile $file, Edital $edital, string $storedName): array
+    public function storeAttachment(UploadedFile $file, Edital $edital, string $storedName): array
     {
+        $mimeType = $file->getMimeType() ?: MimeHelper::fromFilename($storedName);
+
+        return $this->storeAttachmentFromPath(
+            $file->getRealPath(),
+            $edital,
+            $storedName,
+            $mimeType
+        );
+    }
+
+    /**
+     * @return array{drive_file_id: ?string, file_path: string}
+     */
+    public function storeAttachmentFromPath(
+        string $path,
+        Edital $edital,
+        string $storedName,
+        ?string $mimeType = null
+    ): array {
+        $mimeType ??= MimeHelper::fromFilename($storedName);
+
         if ($this->usesGoogleDrive()) {
             return [
                 'drive_file_id' => $this->googleDrive->upload(
-                    $file->getRealPath(),
+                    $path,
                     $edital->slug.'/'.$storedName,
-                    'application/pdf'
+                    $mimeType
                 ),
                 'file_path' => '',
             ];
         }
 
-        $relativePath = Storage::disk('public')->putFileAs(
-            'editais/'.$edital->slug.'/anexos',
-            $file,
-            $storedName
-        );
+        $destination = storage_path('app/public/editais/'.$edital->slug.'/anexos/'.$storedName);
+        File::ensureDirectoryExists(dirname($destination));
+        File::copy($path, $destination);
 
-        if (! $relativePath) {
-            throw new \RuntimeException('Não foi possível salvar o anexo.');
-        }
+        $relativePath = 'editais/'.$edital->slug.'/anexos/'.$storedName;
+        $this->publishPublicFile($relativePath);
 
         return [
             'drive_file_id' => null,
             'file_path' => '/storage/'.$relativePath,
         ];
+    }
+
+    /**
+     * @deprecated Use storeAttachment()
+     *
+     * @return array{drive_file_id: ?string, file_path: string}
+     */
+    public function storeAttachmentPdf(UploadedFile $file, Edital $edital, string $storedName): array
+    {
+        return $this->storeAttachment($file, $edital, $storedName);
+    }
+
+    private function publishPublicFile(string $relativePath): void
+    {
+        $source = storage_path('app/public/'.$relativePath);
+        $dest = public_path('storage/'.$relativePath);
+
+        if (! file_exists($source)) {
+            return;
+        }
+
+        File::ensureDirectoryExists(dirname($dest));
+        File::copy($source, $dest);
     }
 
     public function deleteMain(Edital $edital): void

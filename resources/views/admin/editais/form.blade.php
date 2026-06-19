@@ -127,7 +127,7 @@
                         + Adicionar anexo
                     </button>
                 </div>
-                <p class="mb-4 text-xs text-oassab-gray">Documentos correlatos — formulários, retificações, resultados, etc.</p>
+                <p class="mb-4 text-xs text-oassab-gray">Documentos correlatos — formulários, retificações, resultados, etc. (PDF, DOC ou DOCX).</p>
 
                 @if ($isEditing && $edital->attachments->isNotEmpty())
                     <div class="mb-4 space-y-2">
@@ -170,7 +170,7 @@
             </label>
             <label class="mt-2 block">
                 <span class="text-xs font-medium text-oassab-gray">Arquivo PDF</span>
-                <input type="file" name="attachment_files[]" accept="application/pdf"
+                <input type="file" name="attachment_files[]" accept="application/pdf,.doc,.docx"
                        class="mt-1 block w-full text-xs text-oassab-gray file:mr-3 file:rounded-full file:border-0 file:bg-oassab-blue/90 file:px-3 file:py-1.5 file:text-[10px] file:font-semibold file:uppercase file:text-white">
             </label>
             <button type="button" class="attachment-remove mt-2 text-xs font-semibold uppercase tracking-wider text-red-600 hover:underline">Remover</button>

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Services\PostImageStorage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Post extends Model
@@ -15,6 +16,7 @@ class Post extends Model
         'excerpt',
         'body',
         'date',
+        'edital_id',
         'image',
         'image_meta',
         'is_published',
@@ -59,6 +61,11 @@ class Post extends Model
     public function categories(): BelongsToMany
     {
         return $this->belongsToMany(Category::class);
+    }
+
+    public function edital(): BelongsTo
+    {
+        return $this->belongsTo(Edital::class);
     }
 
     public function scopePublished(Builder $query): Builder

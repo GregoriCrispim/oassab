@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StorePostRequest;
 use App\Models\Category;
+use App\Models\Edital;
 use App\Models\Post;
 use App\Services\ImageOptimizer;
 use App\Services\PostImageStorage;
@@ -59,6 +60,7 @@ class PostController extends Controller
             'post' => $post,
             'categories' => Category::assignableToPosts()->orderBy('name')->get(),
             'selectedCategoryIds' => [],
+            'editais' => Edital::query()->ordered()->get(['id', 'title', 'slug']),
         ]);
     }
 
@@ -102,6 +104,7 @@ class PostController extends Controller
                 ->where('slug', '!=', Category::TRANSPARENCIA)
                 ->pluck('id')
                 ->all(),
+            'editais' => Edital::query()->ordered()->get(['id', 'title', 'slug']),
         ]);
     }
 

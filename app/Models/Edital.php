@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Edital extends Model
@@ -35,6 +36,11 @@ class Edital extends Model
     public function attachments(): HasMany
     {
         return $this->hasMany(EditalAttachment::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function posts(): HasMany
+    {
+        return $this->hasMany(Post::class);
     }
 
     public function scopePublished(Builder $query): Builder

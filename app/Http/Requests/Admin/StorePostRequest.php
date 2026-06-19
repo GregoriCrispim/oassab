@@ -34,6 +34,7 @@ class StorePostRequest extends FormRequest
             'body' => ['nullable', 'string'],
             'image' => ['nullable', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'remove_image' => ['nullable', 'boolean'],
+            'edital_id' => ['nullable', 'integer', Rule::exists('editais', 'id')],
             'categories' => ['required', 'array', 'min:1'],
             'categories.*' => [
                 'integer',
@@ -70,6 +71,7 @@ class StorePostRequest extends FormRequest
             'date' => $this->input('date'),
             'excerpt' => $this->input('excerpt'),
             'body' => $this->input('body'),
+            'edital_id' => $this->input('edital_id') ?: null,
             'is_published' => $this->boolean('is_published'),
         ];
     }

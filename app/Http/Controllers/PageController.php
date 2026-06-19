@@ -111,7 +111,7 @@ class PageController extends Controller
     {
         $post = ContentCache::remember(
             ContentCache::postKey($slug),
-            fn () => Post::with('categories')->where('slug', $slug)->firstOrFail()
+            fn () => Post::with(['categories', 'edital'])->where('slug', $slug)->firstOrFail()
         );
 
         $primary = $post->primaryCategorySlug();

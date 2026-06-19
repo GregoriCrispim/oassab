@@ -37,7 +37,7 @@ class StoreEditalRequest extends FormRequest
             'attachment_titles' => ['nullable', 'array', 'max:50'],
             'attachment_titles.*' => ['nullable', 'string', 'max:255'],
             'attachment_files' => ['nullable', 'array', 'max:50'],
-            'attachment_files.*' => ['nullable', 'file', 'mimes:pdf', 'max:20480'],
+            'attachment_files.*' => ['nullable', 'file', 'mimes:pdf,doc,docx', 'max:20480'],
             'remove_attachments' => ['nullable', 'array'],
             'remove_attachments.*' => ['integer', Rule::exists('edital_attachments', 'id')],
             'is_published' => ['nullable', 'boolean'],
@@ -49,7 +49,7 @@ class StoreEditalRequest extends FormRequest
         return [
             'file.mimes' => 'O edital principal deve ser um PDF.',
             'file.max' => 'O PDF principal deve ter no máximo 20 MB.',
-            'attachment_files.*.mimes' => 'Cada anexo deve ser um PDF.',
+            'attachment_files.*.mimes' => 'Cada anexo deve ser PDF, DOC ou DOCX.',
             'attachment_files.*.max' => 'Cada anexo deve ter no máximo 20 MB.',
         ];
     }

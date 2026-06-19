@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Edital;
 use App\Models\EditalAttachment;
 use App\Services\GoogleDriveService;
+use App\Support\MimeHelper;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -18,10 +19,13 @@ class EditalFileController extends Controller
         }
 
         if ($edital->drive_file_id) {
+            $filename = $edital->original_filename ?: $edital->slug.'.pdf';
+
             return $this->streamFromDrive(
                 $googleDrive,
                 $edital->drive_file_id,
-                $edital->original_filename ?: $edital->slug.'.pdf'
+                $filename,
+                MimeHelper::fromFilename($filename)
             );
         }
 
@@ -46,10 +50,13 @@ class EditalFileController extends Controller
         }
 
         if ($attachment->drive_file_id) {
+            $filename = $attachment->original_filename ?: $attachment->title;
+
             return $this->streamFromDrive(
                 $googleDrive,
                 $attachment->drive_file_id,
-                $attachment->original_filename ?: $attachment->title.'.pdf'
+                $filename,
+                MimeHelper::fromFilename($filename)
             );
         }
 
@@ -63,7 +70,8 @@ class EditalFileController extends Controller
     private function streamFromDrive(
         GoogleDriveService $googleDrive,
         string $fileId,
-        string $downloadName
+        string $downloadName,
+        string $contentType = 'application/octet-stream'
     ): StreamedResponse {
         return response()->streamDownload(function () use ($googleDrive, $fileId) {
             $stream = $googleDrive->readStream($fileId);
@@ -72,7 +80,7 @@ class EditalFileController extends Controller
                 fclose($stream);
             }
         }, $downloadName, [
-            'Content-Type' => 'application/pdf',
+            'Content-Type' => $contentType,
         ]);
     }
 }

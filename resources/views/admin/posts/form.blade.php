@@ -93,6 +93,21 @@
                            class="h-4 w-4 rounded border-oassab-border text-oassab-orange focus:ring-oassab-orange">
                     Publicado (visível no site)
                 </label>
+
+                <label class="mt-4 block">
+                    <span class="text-xs font-medium text-oassab-gray">Edital relacionado</span>
+                    <select name="edital_id"
+                            class="mt-1 w-full rounded-lg border border-oassab-border bg-white px-3 py-2 text-sm text-oassab-blue focus:border-oassab-orange focus:outline-none">
+                        <option value="">Nenhum</option>
+                        @foreach ($editais as $editalOption)
+                            <option value="{{ $editalOption->id }}"
+                                @selected((string) old('edital_id', $post->edital_id) === (string) $editalOption->id)>
+                                {{ $editalOption->title }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <span class="mt-1 block text-xs text-oassab-gray">Exibe um link «Ver edital» na página da notícia.</span>
+                </label>
             </div>
 
             <div class="rounded-2xl border border-oassab-border bg-white p-6 shadow-sm">

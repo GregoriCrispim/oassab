@@ -157,8 +157,9 @@ class EditalController extends Controller
             }
 
             $title = trim((string) ($titles[$index] ?? '')) ?: $file->getClientOriginalName();
-            $storedName = Str::uuid()->toString().'.pdf';
-            $stored = $this->files->storeAttachmentPdf($file, $edital, $storedName);
+            $extension = strtolower($file->getClientOriginalExtension() ?: 'pdf');
+            $storedName = Str::uuid()->toString().'.'.$extension;
+            $stored = $this->files->storeAttachment($file, $edital, $storedName);
 
             $edital->attachments()->create([
                 'title' => $title,
