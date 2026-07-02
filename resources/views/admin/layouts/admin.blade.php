@@ -7,8 +7,17 @@
         ['label' => 'Editais', 'href' => route('admin.editais.index'), 'active' => str_starts_with($current, 'admin/editais'), 'icon' => 'edital'],
         ['label' => 'Meu perfil', 'href' => route('admin.profile.edit'), 'active' => str_starts_with($current, 'admin/profile'), 'icon' => 'user'],
     ];
+    if (auth()->user()?->canAccessPatrimonio()) {
+        array_splice($sidebar, 1, 0, [[
+            'label' => 'Patrimônios',
+            'href' => route('patrimonios.dashboard'),
+            'active' => str_starts_with($current, 'patrimonios'),
+            'icon' => 'box',
+        ]]);
+    }
     $icons = [
         'home' => '<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10a1 1 0 0 0 1 1h4v-7h4v7h4a1 1 0 0 0 1-1V10"/>',
+        'box' => '<path stroke-linecap="round" stroke-linejoin="round" d="M21 8V5a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 5v3m18 0v8a2 2 0 0 1-1 1.73l-7 4a2 2 0 0 1-2 0l-7-4A2 2 0 0 1 3 16V8m18 0l-9 5-9-5"/>',
         'doc'  => '<path stroke-linecap="round" stroke-linejoin="round" d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" d="M14 3v6h6M9 14h6M9 18h6"/>',
         'pdf'  => '<path stroke-linecap="round" stroke-linejoin="round" d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" d="M14 3v6h6M9 14h6M9 18h4"/>',
         'edital' => '<path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/>',
@@ -27,6 +36,7 @@
 
     <title>@yield('title', 'Painel') — OASSAB Admin</title>
 
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     @stack('head')
@@ -44,7 +54,7 @@
             <nav class="flex-1 space-y-1 p-4 text-sm">
                 @foreach ($sidebar as $item)
                     <a href="{{ $item['href'] }}"
-                       class="flex items-center gap-3 rounded-lg px-3 py-2.5 font-medium transition {{ $item['active'] ? 'bg-oassab-orange text-white' : 'text-white/80 hover:bg-white/5 hover:text-white' }}">
+                       class="flex items-center gap-3 rounded-lg px-3 py-2.5 font-medium transition {{ $item['active'] ? 'bg-oassab-orange text-white hover:text-white' : 'text-white/80 hover:bg-white/5 hover:text-white' }}">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" class="h-5 w-5">
                             {!! $icons[$item['icon']] !!}
                         </svg>

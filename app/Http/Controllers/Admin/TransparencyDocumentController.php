@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreTransparencyDocumentRequest;
 use App\Models\TransparencyDocument;
+use App\Support\PaginationPerPage;
 use App\Support\UploadedFileHelper;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,7 +27,7 @@ class TransparencyDocumentController extends Controller
             });
         }
 
-        $documents = $query->paginate(15)->withQueryString();
+        $documents = $query->paginate(PaginationPerPage::resolve($request, 10))->withQueryString();
 
         return view('admin.transparency-documents.index', [
             'documents' => $documents,

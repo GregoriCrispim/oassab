@@ -78,9 +78,5 @@
         </table>
     </div>
 
-    @if ($documents->hasPages())
-        <div class="mt-6">
-            {{ $documents->links() }}
-        </div>
-    @endif
+    <x-pagination :paginator="$documents" />
 @endsection

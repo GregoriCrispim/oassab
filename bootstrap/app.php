@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\CachePublicPages;
+use App\Http\Middleware\EnsurePatrimonioAccess;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -15,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
+            'patrimonio' => EnsurePatrimonioAccess::class,
             'page.cache' => CachePublicPages::class,
         ]);
 

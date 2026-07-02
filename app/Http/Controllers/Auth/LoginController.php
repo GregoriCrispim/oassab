@@ -29,29 +29,46 @@ class LoginController extends Controller
         $remember = $request->boolean('remember');
 
         try {
-            $authenticated = Auth::attempt(
-                array_merge($credentials, ['is_admin' => true]),
-                $remember,
-            );
+            $authenticated = Auth::attempt($credentials, $remember);
         } catch (QueryException|PDOException $e) {
-            Log::error('Falha de conexão/consulta ao autenticar admin', [
+            Log::error('Falha de conexão/consulta ao autenticar', [
                 'message' => $e->getMessage(),
             ]);
 
             throw ValidationException::withMessages([
-                'email' => 'Não foi possível conectar ao banco de dados. Verifique DB_HOST, DB_USERNAME e DB_PASSWORD no .env (e Remote MySQL no cPanel, se estiver em desenvolvimento local).',
+                'email' => 'Não foi possível conectar ao banco de dados. Verifique DB_HOST, DB_USERNAME e DB_PASSWORD no .env.',
             ]);
         }
 
         if (! $authenticated) {
             throw ValidationException::withMessages([
-                'email' => 'Credenciais inválidas ou usuário sem permissão de administrador.',
+                'email' => 'Credenciais inválidas.',
+            ]);
+        }
+
+        $user = Auth::user();
+
+        if (! $user->is_admin && ! $user->canAccessPatrimonio()) {
+            Auth::logout();
+
+            throw ValidationException::withMessages([
+                'email' => 'Usuário sem permissão de acesso ao sistema.',
             ]);
         }
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('admin.dashboard'));
+        $intended = $request->session()->pull('url.intended');
+
+        if ($intended && str_contains($intended, '/patrimonios')) {
+            return redirect()->intended(route('patrimonios.dashboard'));
+        }
+
+        if ($user->is_admin) {
+            return redirect()->intended(route('admin.dashboard'));
+        }
+
+        return redirect()->intended(route('patrimonios.dashboard'));
     }
 
     public function logout(Request $request): RedirectResponse

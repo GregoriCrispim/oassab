@@ -85,9 +85,5 @@
         </table>
     </div>
 
-    @if ($posts->hasPages())
-        <div class="mt-6">
-            {{ $posts->links() }}
-        </div>
-    @endif
+        <x-pagination :paginator="$posts" />
 @endsection

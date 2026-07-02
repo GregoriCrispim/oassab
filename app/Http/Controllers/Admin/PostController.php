@@ -9,6 +9,7 @@ use App\Models\Edital;
 use App\Models\Post;
 use App\Services\ImageOptimizer;
 use App\Services\PostImageStorage;
+use App\Support\PaginationPerPage;
 use App\Support\UploadedFileHelper;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -38,7 +39,7 @@ class PostController extends Controller
             });
         }
 
-        $posts = $query->paginate(15)->withQueryString();
+        $posts = $query->paginate(PaginationPerPage::resolve($request, 10))->withQueryString();
         $categories = Category::assignableToPosts()->orderBy('name')->get();
 
         return view('admin.posts.index', [

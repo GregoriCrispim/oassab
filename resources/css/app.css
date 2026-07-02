@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700;800&display=swap');
+@import './bootstrap-pagination.css';
 
 @tailwind base;
 @tailwind components;
@@ -24,7 +25,7 @@
         @apply text-oassab-blue transition-colors;
     }
 
-    a:hover {
+    a:where(:not([class*='bg-oassab-'])):hover {
         @apply text-oassab-orange;
     }
 
@@ -49,6 +50,38 @@
 
     .btn-ghost {
         @apply inline-flex items-center gap-2 rounded-full border border-oassab-blue/20 px-6 py-2.5 text-xs font-semibold uppercase tracking-wider text-oassab-blue transition hover:border-oassab-orange hover:bg-oassab-orange hover:text-white;
+    }
+
+    .btn-orange {
+        @apply inline-flex items-center justify-center gap-2 rounded-lg bg-oassab-orange px-4 py-2 text-sm font-semibold text-white transition hover:bg-oassab-blue hover:text-white;
+    }
+
+    .btn-orange-lg {
+        @apply btn-orange px-6 py-2.5;
+    }
+
+    .btn-blue {
+        @apply inline-flex items-center justify-center gap-2 rounded-lg bg-oassab-blue px-4 py-2 text-sm font-semibold text-white transition hover:bg-oassab-blue-dark hover:text-white;
+    }
+
+    .btn-blue-lg {
+        @apply btn-blue px-6 py-2.5;
+    }
+
+    .btn-icon {
+        @apply inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-oassab-border bg-white text-base transition;
+    }
+
+    .btn-icon--blue {
+        @apply text-oassab-blue hover:border-oassab-blue/30 hover:bg-oassab-cream;
+    }
+
+    .btn-icon--orange {
+        @apply text-oassab-orange hover:border-oassab-orange/30 hover:bg-orange-50;
+    }
+
+    .btn-icon--red {
+        @apply border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50;
     }
 
     .section-title {
@@ -77,5 +110,175 @@
 
     .hero-overlay {
         background: linear-gradient(120deg, rgba(8, 15, 51, 0.85) 0%, rgba(31, 39, 84, 0.65) 60%, rgba(31, 39, 84, 0.4) 100%);
+    }
+
+    .qrcode-modal__dialog {
+        max-height: min(90dvh, calc(100dvh - 2rem));
+    }
+
+    .qrcode-modal__grid {
+        display: grid;
+        gap: var(--qr-gap, 16px);
+    }
+
+    .qrcode-modal__item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        border: 1px solid #efefef;
+        border-radius: 0.5rem;
+        background: #fff;
+        padding: 0.375rem;
+    }
+
+    .qrcode-modal__code {
+        margin: 0 0 0.125rem;
+        font-family: ui-monospace, monospace;
+        font-size: var(--qr-label-size, 14px);
+        font-weight: 600;
+        color: #1f2754;
+        text-align: center;
+    }
+
+    .qrcode-modal__image img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+    }
+
+    .form-modal__dialog {
+        max-height: min(90dvh, calc(100dvh - 2rem));
+    }
+
+    .form-section {
+        @apply rounded-2xl border border-oassab-border bg-white p-6 shadow-sm;
+    }
+
+    .form-section__header {
+        @apply mb-5 flex items-start gap-3 border-b border-oassab-border pb-4;
+    }
+
+    .form-section__icon {
+        @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-oassab-cream text-base text-oassab-blue;
+    }
+
+    .form-section__title {
+        @apply font-heading text-base font-bold text-oassab-blue;
+    }
+
+    .form-section__subtitle {
+        @apply mt-0.5 text-xs text-oassab-gray;
+    }
+
+    .form-grid {
+        @apply grid gap-5 md:grid-cols-2;
+    }
+
+    .form-field {
+        @apply min-w-0;
+    }
+
+    .form-label {
+        @apply block text-xs font-semibold uppercase tracking-wider text-oassab-blue;
+    }
+
+    .form-input {
+        @apply mt-2 w-full rounded-lg border border-oassab-border bg-white px-4 py-2.5 text-sm text-oassab-blue transition placeholder:text-oassab-gray/60 focus:border-oassab-orange focus:outline-none focus:ring-2 focus:ring-oassab-orange/15;
+    }
+
+    .form-input:disabled {
+        @apply cursor-not-allowed bg-oassab-cream/60 text-oassab-gray;
+    }
+
+    .form-input--color {
+        @apply h-11 cursor-pointer p-1;
+    }
+
+    .form-hint {
+        @apply mt-1.5 text-xs leading-relaxed text-oassab-gray;
+    }
+
+    .form-checkbox {
+        @apply h-4 w-4 rounded border-oassab-border text-oassab-orange focus:ring-oassab-orange/20;
+    }
+
+    .form-radio {
+        @apply h-4 w-4 border-oassab-border text-oassab-orange focus:ring-oassab-orange/20;
+    }
+
+    .form-toggle {
+        @apply flex items-center gap-3 rounded-xl border border-oassab-border bg-oassab-cream/40 px-4 py-3;
+    }
+
+    .form-file {
+        @apply mt-2 block w-full cursor-pointer rounded-lg border border-dashed border-oassab-border bg-oassab-cream/30 px-4 py-3 text-sm text-oassab-gray transition file:mr-4 file:rounded-md file:border-0 file:bg-oassab-blue file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:border-oassab-orange/40 hover:bg-oassab-cream/60;
+    }
+
+    .form-actions {
+        @apply flex flex-wrap items-center gap-3 border-t border-oassab-border pt-5;
+    }
+
+    .form-campo-row {
+        @apply grid gap-4 rounded-xl border border-oassab-border bg-oassab-cream/20 p-4 md:grid-cols-4;
+    }
+
+    .form-campo-row__actions {
+        @apply flex flex-wrap items-center gap-4 md:col-span-4;
+    }
+
+    .form-proposta-card {
+        @apply flex items-center justify-between gap-4 rounded-xl border border-oassab-border bg-white p-4 transition;
+    }
+
+    .form-proposta-card--selected {
+        @apply border-green-300 bg-green-50;
+    }
+
+    .list-filters {
+        @apply flex flex-wrap items-end gap-3;
+    }
+
+    .list-filters__fields {
+        @apply flex flex-wrap items-end gap-3;
+    }
+
+    .list-filters__clear {
+        @apply inline-flex shrink-0 items-center gap-1 text-xs font-semibold uppercase tracking-wider text-oassab-gray transition hover:text-oassab-orange;
+    }
+
+    .list-filter-field {
+        @apply min-w-0;
+    }
+
+    .list-filter-field--search {
+        @apply min-w-[220px] flex-1 sm:max-w-xs;
+    }
+
+    .list-filter-select {
+        @apply relative;
+    }
+
+    .list-filter-select__input {
+        @apply mt-1.5 min-w-[140px] cursor-pointer appearance-none pr-10;
+    }
+
+    .list-filter-select__icon {
+        @apply pointer-events-none absolute bottom-[13px] right-3 text-xs text-oassab-gray;
+    }
+
+    .list-filter-search {
+        @apply relative mt-1.5;
+    }
+
+    .list-filter-search__input {
+        @apply pl-9 pr-10;
+    }
+
+    .list-filter-search__icon {
+        @apply pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-oassab-gray;
+    }
+
+    .list-filter-search__clear {
+        @apply absolute inset-y-0 right-0 flex items-center px-3 text-oassab-gray transition hover:text-oassab-blue disabled:pointer-events-none;
     }
 }

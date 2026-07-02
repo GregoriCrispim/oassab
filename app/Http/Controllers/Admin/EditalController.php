@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\StoreEditalRequest;
 use App\Models\Edital;
 use App\Models\EditalAttachment;
 use App\Services\EditalFileStorage;
+use App\Support\PaginationPerPage;
 use App\Support\UploadedFileHelper;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -31,7 +32,7 @@ class EditalController extends Controller
             });
         }
 
-        $editais = $query->paginate(15)->withQueryString();
+        $editais = $query->paginate(PaginationPerPage::resolve($request, 10))->withQueryString();
 
         return view('admin.editais.index', [
             'editais' => $editais,

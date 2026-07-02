@@ -8,8 +8,21 @@ use App\Http\Controllers\Admin\TransparencyDocumentController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\EditalFileController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\Patrimonio\CategoriaController as PatrimonioCategoriaController;
+use App\Http\Controllers\Patrimonio\DashboardController as PatrimonioDashboardController;
+use App\Http\Controllers\Patrimonio\LogController as PatrimonioLogController;
+use App\Http\Controllers\Patrimonio\ManutencaoController;
+use App\Http\Controllers\Patrimonio\OrcamentoController;
+use App\Http\Controllers\Patrimonio\PatrimonioController;
+use App\Http\Controllers\Patrimonio\QrScannerController;
+use App\Http\Controllers\Patrimonio\RelatorioController as PatrimonioRelatorioController;
+use App\Http\Controllers\Patrimonio\UserController as PatrimonioUserController;
 use App\Http\Controllers\PostFileController;
 use Illuminate\Support\Facades\Route;
+
+Route::bind('usuario', fn (string $value) => \App\Models\User::findOrFail($value));
+Route::bind('categoria', fn (string $value) => \App\Models\PatrimonioCategoria::findOrFail($value));
+Route::bind('manutencao', fn (string $value) => \App\Models\Manutencao::findOrFail($value));
 
 // --------------------------------------------------------------------
 // Site público (cache de página inteira via middleware page.cache)
@@ -68,4 +81,43 @@ Route::middleware(['auth', 'admin'])
 
         Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    });
+
+// --------------------------------------------------------------------
+// Módulo Patrimonial OASSAB
+// --------------------------------------------------------------------
+Route::middleware(['auth', 'patrimonio'])
+    ->prefix('patrimonios')
+    ->name('patrimonios.')
+    ->group(function () {
+        Route::redirect('/', '/patrimonios/dashboard');
+        Route::get('/dashboard', [PatrimonioDashboardController::class, 'index'])->name('dashboard');
+
+        Route::get('patrimonios/{patrimonio}/qrcodes/data', [PatrimonioController::class, 'qrcodesData'])->name('patrimonios.qrcodes.data');
+        Route::get('patrimonios/{patrimonio}/qrcode', [PatrimonioController::class, 'qrcode'])->name('patrimonios.qrcode');
+        Route::post('patrimonios/{patrimonio}', [PatrimonioController::class, 'update'])->name('patrimonios.update');
+        Route::resource('patrimonios', PatrimonioController::class)->except(['update']);
+
+        Route::resource('categorias', PatrimonioCategoriaController::class)->except(['show']);
+
+        Route::resource('manutencoes', ManutencaoController::class)
+            ->except(['show'])
+            ->parameters(['manutencoes' => 'manutencao']);
+
+        Route::resource('orcamentos', OrcamentoController::class)->except(['show']);
+        Route::post('orcamentos/{orcamento}/propostas', [OrcamentoController::class, 'storeProposta'])->name('orcamentos.propostas.store');
+        Route::delete('orcamentos/{orcamento}/propostas/{proposta}', [OrcamentoController::class, 'destroyProposta'])->name('orcamentos.propostas.destroy');
+
+        Route::get('qr-scanner', [QrScannerController::class, 'index'])->name('qr-scanner');
+        Route::post('qr-scanner/buscar', [QrScannerController::class, 'buscar'])->name('qr-scanner.buscar');
+
+        Route::get('relatorios/patrimonios/csv', [PatrimonioRelatorioController::class, 'patrimoniosCsv'])->name('relatorios.patrimonios.csv');
+        Route::get('relatorios/patrimonios/pdf', [PatrimonioRelatorioController::class, 'patrimoniosPdf'])->name('relatorios.patrimonios.pdf');
+        Route::get('relatorios/orcamentos/csv', [PatrimonioRelatorioController::class, 'orcamentosCsv'])->name('relatorios.orcamentos.csv');
+        Route::get('relatorios/orcamentos/pdf', [PatrimonioRelatorioController::class, 'orcamentosPdf'])->name('relatorios.orcamentos.pdf');
+
+        Route::get('logs', [PatrimonioLogController::class, 'index'])->name('logs.index');
+        Route::delete('logs', [PatrimonioLogController::class, 'clear'])->name('logs.clear');
+
+        Route::resource('usuarios', PatrimonioUserController::class)->except(['show']);
     });

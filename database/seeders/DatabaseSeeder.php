@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             EditalInternoOassab2026Seeder::class,
             EditalInternoOassab2Seeder::class,
             AdminUserSeeder::class,
+            PatrimonioCategoriasSeeder::class,
         ]);
     }
 }

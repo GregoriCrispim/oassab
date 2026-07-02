@@ -105,7 +105,7 @@
                         <h3 class="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-oassab-orange">Compartilhar</h3>
                         <div class="flex flex-wrap gap-3">
                             <a href="https://wa.me/?text={{ urlencode($post->title.' — '.url()->current()) }}" target="_blank" rel="noopener"
-                               class="inline-flex items-center gap-2 rounded-full bg-oassab-blue px-4 py-2 text-xs font-semibold uppercase tracking-wider text-white transition hover:bg-oassab-orange">
+                               class="inline-flex items-center gap-2 rounded-full bg-oassab-blue px-4 py-2 text-xs font-semibold uppercase tracking-wider text-white transition hover:bg-oassab-orange hover:text-white">
                                 WhatsApp
                             </a>
                             <a href="mailto:?subject={{ urlencode($post->title) }}&body={{ urlencode(url()->current()) }}"

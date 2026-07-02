@@ -83,6 +83,6 @@
     </div>
 
     @if ($editais->hasPages())
-        <div class="mt-6">{{ $editais->links() }}</div>
+        <x-pagination :paginator="$editais" />
     @endif
 @endsection

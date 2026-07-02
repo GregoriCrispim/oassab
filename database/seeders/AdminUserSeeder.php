@@ -20,6 +20,7 @@ class AdminUserSeeder extends Seeder
                 'name' => 'Administrador OASSAB',
                 'password' => Hash::make(self::DEFAULT_PASSWORD),
                 'is_admin' => true,
+                'patrimonio_role' => 'admin',
                 'email_verified_at' => now(),
             ],
         );
