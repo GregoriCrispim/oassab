@@ -41,6 +41,7 @@
             </div>
 
             <label class="form-toggle">
+                <input type="hidden" name="ativo" value="0">
                 <input type="checkbox" name="ativo" value="1" @checked(old('ativo', $categoria->ativo ?? true)) class="form-checkbox">
                 <span>
                     <span class="block text-sm font-semibold text-oassab-blue">Categoria ativa</span>

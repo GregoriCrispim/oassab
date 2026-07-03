@@ -25,6 +25,26 @@
     @stack('head')
 </head>
 <body class="min-h-screen bg-oassab-cream">
+    <div id="patrimonio-sidebar-backdrop" class="fixed inset-0 z-40 hidden bg-oassab-blue-dark/60 backdrop-blur-sm md:hidden" aria-hidden="true"></div>
+
+    <aside
+        id="patrimonio-sidebar-drawer"
+        class="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] -translate-x-full flex-col bg-oassab-blue-dark text-white shadow-2xl transition-transform duration-300 ease-out md:hidden"
+        aria-label="Menu de navegação"
+        aria-hidden="true"
+    >
+        <div class="flex h-16 items-center justify-between border-b border-white/10 px-4">
+            <a href="{{ route('patrimonios.dashboard') }}" class="flex items-center gap-2" data-patrimonio-sidebar-close>
+                <img src="/images/icone.png" alt="OASSAB" class="h-9 w-auto">
+                <span class="text-xs font-semibold uppercase tracking-[0.2em] text-oassab-orange">Patrimônio</span>
+            </a>
+            <button type="button" class="rounded-lg p-2 text-white/80 transition hover:bg-white/10 hover:text-white" data-patrimonio-sidebar-close aria-label="Fechar menu">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <x-patrimonios.sidebar-nav :sidebar="$sidebar" :user="$user" on-navigate class="overflow-y-auto" />
+    </aside>
+
     <div class="flex min-h-screen">
         <aside class="hidden w-64 shrink-0 flex-col bg-oassab-blue-dark text-white md:flex">
             <div class="flex h-20 items-center justify-center border-b border-white/10 px-6">
@@ -33,38 +53,30 @@
                     <span class="text-sm font-semibold uppercase tracking-[0.2em] text-oassab-orange">Patrimônio</span>
                 </a>
             </div>
-            <nav class="flex-1 space-y-1 p-4 text-sm">
-                @foreach ($sidebar as $item)
-                    @if ($item['show'])
-                        <a href="{{ $item['href'] }}"
-                           class="flex items-center gap-3 rounded-lg px-3 py-2.5 font-medium transition {{ $item['active'] ? 'bg-oassab-orange text-white hover:text-white' : 'text-white/80 hover:bg-white/5 hover:text-white' }}">
-                            <i class="bi bi-{{ $item['icon'] }} text-lg"></i>
-                            {{ $item['label'] }}
-                        </a>
-                    @endif
-                @endforeach
-            </nav>
-            <div class="border-t border-white/10 p-4 space-y-2">
-                @if ($user->is_admin)
-                    <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider text-white/60 transition hover:text-white">
-                        <i class="bi bi-grid"></i> Painel CMS
-                    </a>
-                @endif
-                <a href="{{ url('/') }}" target="_blank" rel="noopener" class="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider text-white/60 transition hover:text-white">
-                    <i class="bi bi-box-arrow-up-right"></i> Site público
-                </a>
-            </div>
+            <x-patrimonios.sidebar-nav :sidebar="$sidebar" :user="$user" />
         </aside>
 
-        <div class="flex flex-1 flex-col">
-            <header class="flex h-20 items-center justify-between border-b border-oassab-border bg-white px-6 shadow-sm">
-                <div>
-                    <h1 class="font-heading text-xl font-bold text-oassab-blue">@yield('title', 'Patrimônios')</h1>
-                    @hasSection('subtitle')
-                        <p class="text-sm text-oassab-gray">@yield('subtitle')</p>
-                    @endif
+        <div class="flex min-w-0 flex-1 flex-col">
+            <header class="flex min-h-16 items-center justify-between gap-3 border-b border-oassab-border bg-white px-4 py-3 shadow-sm sm:px-6 md:h-20 md:py-0">
+                <div class="flex min-w-0 items-center gap-3">
+                    <button
+                        type="button"
+                        data-patrimonio-sidebar-toggle
+                        class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-oassab-border text-oassab-blue transition hover:bg-oassab-cream md:hidden"
+                        aria-expanded="false"
+                        aria-controls="patrimonio-sidebar-drawer"
+                        aria-label="Abrir menu"
+                    >
+                        <i class="bi bi-list text-xl"></i>
+                    </button>
+                    <div class="min-w-0">
+                        <h1 class="truncate font-heading text-lg font-bold text-oassab-blue sm:text-xl">@yield('title', 'Patrimônios')</h1>
+                        @hasSection('subtitle')
+                            <p class="truncate text-xs text-oassab-gray sm:text-sm">@yield('subtitle')</p>
+                        @endif
+                    </div>
                 </div>
-                <div class="flex items-center gap-3">
+                <div class="flex shrink-0 items-center gap-2 sm:gap-3">
                     <div class="hidden text-right md:block">
                         <p class="text-xs uppercase tracking-wider text-oassab-gray">Logado como</p>
                         <p class="text-sm font-semibold text-oassab-blue">{{ $user->name }}</p>
@@ -72,22 +84,22 @@
                     </div>
                     <form method="POST" action="{{ route('admin.logout') }}">
                         @csrf
-                        <button type="submit" class="rounded-lg border border-oassab-border px-4 py-2 text-sm font-semibold text-oassab-blue transition hover:bg-oassab-cream">
+                        <button type="submit" class="rounded-lg border border-oassab-border px-3 py-2 text-xs font-semibold text-oassab-blue transition hover:bg-oassab-cream sm:px-4 sm:text-sm">
                             Sair
                         </button>
                     </form>
                 </div>
             </header>
 
-            <main class="flex-1 p-6">
+            <main class="flex-1 p-4 sm:p-6">
                 @if (session('status') || request('status'))
-                    <div class="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+                    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 sm:mb-6">
                         {{ session('status') ?? request('status') }}
                     </div>
                 @endif
 
                 @if ($errors->any())
-                    <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 sm:mb-6">
                         <ul class="list-disc pl-5">
                             @foreach ($errors->all() as $error)
                                 <li>{{ $error }}</li>

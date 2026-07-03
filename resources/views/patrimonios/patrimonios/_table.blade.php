@@ -1,5 +1,5 @@
-<div class="overflow-hidden rounded-xl border border-oassab-border bg-white shadow-sm">
-    <table class="min-w-full divide-y divide-oassab-border text-sm">
+<x-patrimonios.responsive-table>
+    <table>
         <thead class="bg-oassab-cream">
             <tr>
                 <th class="px-4 py-3 text-left font-semibold text-oassab-blue">Código</th>
@@ -14,34 +14,34 @@
         <tbody class="divide-y divide-oassab-border">
             @forelse ($patrimonios as $p)
                 <tr class="hover:bg-oassab-cream/50">
-                    <td class="px-4 py-3 font-mono text-xs">
+                    <td data-label="Código" class="px-4 py-3 font-mono text-xs">
                         {{ $p->codigoResumo() }}
                         @if ($p->unidades() > 1)
                             <span class="mt-1 block text-[11px] font-sans text-oassab-gray">Ref. {{ $p->codigo }}</span>
                         @endif
                     </td>
-                    <td class="px-4 py-3">
+                    <td data-label="Nome" class="px-4 py-3">
                         <a href="{{ route('patrimonios.patrimonios.show', $p) }}" class="font-medium text-oassab-blue hover:underline">{{ $p->nome }}</a>
                         @unless ($p->ativo)
                             <span class="ml-2 rounded bg-gray-200 px-2 py-0.5 text-xs">Inativo</span>
                         @endunless
                     </td>
-                    <td class="px-4 py-3 text-center">
+                    <td data-label="Qtd." class="px-4 py-3 text-center md:text-center">
                         @if ($p->unidades() > 1)
                             <span class="inline-flex min-w-8 items-center justify-center rounded-full bg-oassab-blue/10 px-2 py-0.5 text-xs font-semibold text-oassab-blue">{{ $p->unidades() }}</span>
                         @else
                             <span class="text-oassab-gray">1</span>
                         @endif
                     </td>
-                    <td class="px-4 py-3 text-oassab-gray">{{ $p->categoria?->nome ?? '—' }}</td>
-                    <td class="px-4 py-3">
+                    <td data-label="Categoria" class="px-4 py-3 text-oassab-gray">{{ $p->categoria?->nome ?? '—' }}</td>
+                    <td data-label="Valor Unit." class="px-4 py-3">
                         R$ {{ number_format($p->valor_atual, 2, ',', '.') }}
                         @if ($p->unidades() > 1)
                             <span class="block text-[11px] text-oassab-gray">Total: R$ {{ number_format($p->valorAtualTotal(), 2, ',', '.') }}</span>
                         @endif
                     </td>
-                    <td class="px-4 py-3 text-oassab-gray">{{ $p->localizacao ?? '—' }}</td>
-                    <td class="px-4 py-3 text-right">
+                    <td data-label="Localização" class="px-4 py-3 text-oassab-gray">{{ $p->localizacao ?? '—' }}</td>
+                    <td data-label="Ações" class="patrimonio-table__actions px-4 py-3 text-right">
                         <div class="inline-flex items-center justify-end gap-1">
                             <x-patrimonios.qrcode-trigger :patrimonio="$p" />
                             @can('update', $p)
@@ -71,10 +71,10 @@
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="7" class="px-4 py-8 text-center text-oassab-gray">Nenhum patrimônio encontrado.</td></tr>
+                <tr><td colspan="7" data-label="" class="patrimonio-table__empty px-4 py-8 text-center text-oassab-gray">Nenhum patrimônio encontrado.</td></tr>
             @endforelse
         </tbody>
     </table>
-</div>
+</x-patrimonios.responsive-table>
 
 <x-pagination :paginator="$patrimonios" />

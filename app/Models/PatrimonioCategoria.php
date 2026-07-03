@@ -48,4 +48,19 @@ class PatrimonioCategoria extends Model
     {
         return $query->where('ativo', true);
     }
+
+    public function iconeBootstrap(): string
+    {
+        $icone = trim($this->icone ?: 'bi-tag');
+
+        if (str_starts_with($icone, 'bi ')) {
+            return $icone;
+        }
+
+        if (str_starts_with($icone, 'bi-')) {
+            return 'bi '.$icone;
+        }
+
+        return 'bi bi-'.$icone;
+    }
 }

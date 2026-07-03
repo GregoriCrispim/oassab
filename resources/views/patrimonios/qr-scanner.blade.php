@@ -45,12 +45,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('erro').classList.remove('hidden');
                 document.getElementById('erro').textContent = data.mensagem || 'Patrimônio não encontrado';
             }
+        })
+        .catch(() => {
+            document.getElementById('erro').classList.remove('hidden');
+            document.getElementById('erro').textContent = 'Erro ao buscar patrimônio. Verifique sua conexão.';
         });
     }
 
     if (typeof Html5Qrcode !== 'undefined') {
         const scanner = new Html5Qrcode('reader');
-        scanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: 250 }, onScan).catch(() => {
+        const qrboxSize = Math.min(280, Math.floor(window.innerWidth * 0.75));
+        scanner.start(
+            { facingMode: 'environment' },
+            { fps: 10, qrbox: { width: qrboxSize, height: qrboxSize } },
+            onScan
+        ).catch(() => {
             document.getElementById('erro').classList.remove('hidden');
             document.getElementById('erro').textContent = 'Não foi possível acessar a câmera.';
         });

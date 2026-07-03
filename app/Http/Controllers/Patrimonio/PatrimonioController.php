@@ -129,7 +129,7 @@ class PatrimonioController extends Controller
         $data['valor_depreciado'] = $dep['valor_depreciado'];
         $data['valor_atual'] = $dep['valor_atual'];
         $data['created_by'] = auth()->id();
-        $data['ativo'] = $request->boolean('ativo', true);
+        $data['ativo'] = $request->boolean('ativo');
 
         DB::transaction(function () use ($data, $camposCustomizados, $request, $quantidade) {
             $patrimonio = Patrimonio::create($data);
@@ -232,7 +232,7 @@ class PatrimonioController extends Controller
 
         $data['valor_depreciado'] = $dep['valor_depreciado'];
         $data['valor_atual'] = $dep['valor_atual'];
-        $data['ativo'] = $request->boolean('ativo', true);
+        $data['ativo'] = $request->boolean('ativo');
 
         DB::transaction(function () use ($patrimonio, $data, $camposCustomizados, $request, $quantidadeAlvo) {
             $patrimonio->update($data);

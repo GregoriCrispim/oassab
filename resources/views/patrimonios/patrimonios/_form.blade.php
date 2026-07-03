@@ -103,6 +103,7 @@
 
             <div class="md:col-span-2">
                 <label class="form-toggle">
+                    <input type="hidden" name="ativo" value="0">
                     <input type="checkbox" name="ativo" value="1" id="ativo" @checked(old('ativo', $patrimonio->ativo ?? true)) class="form-checkbox">
                     <span>
                         <span class="block text-sm font-semibold text-oassab-blue">Patrimônio ativo</span>

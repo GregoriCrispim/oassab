@@ -38,7 +38,7 @@ class StoreCategoriaRequest extends FormRequest
             'indice_depreciacao_padrao' => $this->input('indice_depreciacao_padrao'),
             'icone' => $this->input('icone', 'bi-tag'),
             'cor' => $this->input('cor', '#6366f1'),
-            'ativo' => $this->boolean('ativo', true),
+            'ativo' => $this->boolean('ativo'),
         ];
     }
 }

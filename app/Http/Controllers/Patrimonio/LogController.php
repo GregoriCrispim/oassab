@@ -14,7 +14,7 @@ class LogController extends Controller
 {
     public function index(Request $request): View
     {
-        abort_unless(auth()->user()->canAccessPatrimonio(), 403);
+        abort_unless(auth()->user()->isPatrimonioAdmin(), 403);
 
         $query = PatrimonioLog::query()->with('user')->orderByDesc('created_at');
 

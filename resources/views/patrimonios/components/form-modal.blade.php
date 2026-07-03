@@ -1,12 +1,12 @@
 <div id="form-modal" class="fixed inset-0 z-50 hidden overflow-hidden overscroll-contain" aria-hidden="true">
     <div class="form-modal__overlay absolute inset-0 bg-oassab-blue-dark/60 backdrop-blur-sm" data-form-modal-close></div>
 
-    <div class="relative flex h-full max-h-[100dvh] items-center justify-center overflow-hidden p-4 sm:p-6">
+    <div class="relative flex h-full max-h-[100dvh] items-center justify-center overflow-hidden p-0 sm:p-4 md:p-6">
         <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="form-modal-title"
-            class="form-modal__dialog flex w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-oassab-border bg-white shadow-2xl"
+            class="form-modal__dialog flex w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-oassab-border bg-white shadow-2xl max-sm:max-h-[100dvh] max-sm:rounded-none"
         >
             <div class="flex shrink-0 items-start justify-between gap-4 border-b border-oassab-border px-6 py-4">
                 <div>

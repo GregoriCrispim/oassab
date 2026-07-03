@@ -209,7 +209,8 @@ class Patrimonio extends Model
             $q->where('nome', 'like', "%{$termo}%")
                 ->orWhere('codigo', 'like', "%{$termo}%")
                 ->orWhere('localizacao', 'like', "%{$termo}%")
-                ->orWhere('responsavel', 'like', "%{$termo}%");
+                ->orWhere('responsavel', 'like', "%{$termo}%")
+                ->orWhereHas('itensInventario', fn ($sub) => $sub->where('codigo', 'like', "%{$termo}%"));
         });
     }
 }

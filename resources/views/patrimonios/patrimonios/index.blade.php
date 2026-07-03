@@ -10,13 +10,14 @@
             || request()->filled('ativo');
     @endphp
 
-    <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <x-patrimonios.list-filters
             id="patrimonios-filter-form"
             :action="route('patrimonios.patrimonios.index')"
             live
             :clear-url="route('patrimonios.patrimonios.index')"
             :has-active-filters="$hasActiveFilters"
+            class="w-full sm:w-auto"
         >
             <x-patrimonios.list-filter-search
                 id="patrimonio-busca"
@@ -39,7 +40,7 @@
             </x-patrimonios.list-filter-select>
         </x-patrimonios.list-filters>
 
-        <div class="flex flex-wrap gap-2">
+        <div class="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
             <a href="{{ route('patrimonios.relatorios.patrimonios.csv') }}" class="rounded-lg border border-oassab-border px-4 py-2 text-sm font-semibold text-oassab-blue">CSV</a>
             <a href="{{ route('patrimonios.relatorios.patrimonios.pdf') }}" class="rounded-lg border border-oassab-border px-4 py-2 text-sm font-semibold text-oassab-blue">PDF</a>
             @can('create', App\Models\Patrimonio::class)

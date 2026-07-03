@@ -3,10 +3,10 @@
 @section('title', $patrimonio->nome)
 
 @section('content')
-    <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div>
+    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div class="min-w-0">
             <p class="font-mono text-sm text-oassab-gray">{{ $patrimonio->codigoResumo() }}</p>
-            <h2 class="font-heading text-2xl font-bold text-oassab-blue">{{ $patrimonio->nome }}</h2>
+            <h2 class="font-heading text-xl font-bold text-oassab-blue sm:text-2xl">{{ $patrimonio->nome }}</h2>
             @if ($patrimonio->unidades() > 1)
                 <p class="mt-1 text-sm text-oassab-gray">{{ $patrimonio->unidades() }} unidades — código inicial <span class="font-mono">{{ $patrimonio->codigo }}</span></p>
             @endif
@@ -48,24 +48,24 @@
         'lg:grid-cols-3 lg:items-start' => $imagemUrl,
     ])>
         <div @class([
-            'rounded-xl border border-oassab-border bg-white p-6 shadow-sm',
+            'rounded-xl border border-oassab-border bg-white p-4 shadow-sm sm:p-6',
             'lg:col-span-2' => $imagemUrl,
         ])>
             <h3 class="mb-4 font-heading font-bold text-oassab-blue">Informações</h3>
 
             <dl class="space-y-3 text-sm">
-                <div class="flex justify-between gap-4"><dt class="text-oassab-gray">Quantidade</dt><dd class="font-medium">{{ $patrimonio->unidades() }}</dd></div>
-                <div class="flex justify-between gap-4"><dt class="text-oassab-gray">Categoria</dt><dd class="font-medium">{{ $patrimonio->categoria?->nome ?? '—' }}</dd></div>
-                <div class="flex justify-between gap-4"><dt class="text-oassab-gray">Valor Unit. Aquisição</dt><dd>R$ {{ number_format($patrimonio->valor_aquisicao, 2, ',', '.') }}</dd></div>
-                <div class="flex justify-between gap-4"><dt class="text-oassab-gray">Valor Unit. Atual</dt><dd class="font-semibold text-green-600">R$ {{ number_format($patrimonio->valor_atual, 2, ',', '.') }}</dd></div>
+                <div class="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4"><dt class="text-oassab-gray">Quantidade</dt><dd class="font-medium sm:text-right">{{ $patrimonio->unidades() }}</dd></div>
+                <div class="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4"><dt class="text-oassab-gray">Categoria</dt><dd class="font-medium sm:text-right">{{ $patrimonio->categoria?->nome ?? '—' }}</dd></div>
+                <div class="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4"><dt class="text-oassab-gray">Valor Unit. Aquisição</dt><dd class="sm:text-right">R$ {{ number_format($patrimonio->valor_aquisicao, 2, ',', '.') }}</dd></div>
+                <div class="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4"><dt class="text-oassab-gray">Valor Unit. Atual</dt><dd class="font-semibold text-green-600 sm:text-right">R$ {{ number_format($patrimonio->valor_atual, 2, ',', '.') }}</dd></div>
                 @if ($patrimonio->unidades() > 1)
-                    <div class="flex justify-between gap-4"><dt class="text-oassab-gray">Valor Total Atual</dt><dd class="font-semibold text-green-600">R$ {{ number_format($patrimonio->valorAtualTotal(), 2, ',', '.') }}</dd></div>
+                    <div class="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4"><dt class="text-oassab-gray">Valor Total Atual</dt><dd class="font-semibold text-green-600 sm:text-right">R$ {{ number_format($patrimonio->valorAtualTotal(), 2, ',', '.') }}</dd></div>
                 @endif
-                <div class="flex justify-between gap-4"><dt class="text-oassab-gray">Depreciação</dt><dd>{{ $patrimonio->indice_depreciacao }}%/ano</dd></div>
-                <div class="flex justify-between gap-4"><dt class="text-oassab-gray">Data Aquisição</dt><dd>{{ $patrimonio->data_aquisicao->format('d/m/Y') }}</dd></div>
-                <div class="flex justify-between gap-4"><dt class="text-oassab-gray">Localização</dt><dd>{{ $patrimonio->localizacao ?? '—' }}</dd></div>
-                <div class="flex justify-between gap-4"><dt class="text-oassab-gray">Responsável</dt><dd>{{ $patrimonio->responsavel ?? '—' }}</dd></div>
-                <div class="flex justify-between gap-4"><dt class="text-oassab-gray">Status</dt><dd>{{ $patrimonio->ativo ? 'Ativo' : 'Inativo' }}</dd></div>
+                <div class="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4"><dt class="text-oassab-gray">Depreciação</dt><dd class="sm:text-right">{{ $patrimonio->indice_depreciacao }}%/ano</dd></div>
+                <div class="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4"><dt class="text-oassab-gray">Data Aquisição</dt><dd class="sm:text-right">{{ $patrimonio->data_aquisicao->format('d/m/Y') }}</dd></div>
+                <div class="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4"><dt class="text-oassab-gray">Localização</dt><dd class="sm:text-right">{{ $patrimonio->localizacao ?? '—' }}</dd></div>
+                <div class="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4"><dt class="text-oassab-gray">Responsável</dt><dd class="sm:text-right">{{ $patrimonio->responsavel ?? '—' }}</dd></div>
+                <div class="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4"><dt class="text-oassab-gray">Status</dt><dd class="sm:text-right">{{ $patrimonio->ativo ? 'Ativo' : 'Inativo' }}</dd></div>
             </dl>
 
             @if ($patrimonio->descricao)
