@@ -31,15 +31,15 @@ class QrScannerController extends Controller
         }
 
         $patrimonio = null;
-
         $json = json_decode($dados, true);
-        if (json_last_error() === JSON_ERROR_NONE && isset($json['id'])) {
-            $patrimonio = Patrimonio::with('categoria')->find($json['id']);
+        $jsonValido = json_last_error() === JSON_ERROR_NONE;
+
+        if ($jsonValido && isset($json['id'])) {
+            $patrimonio = Patrimonio::with(['categoria', 'itensInventario'])->find($json['id']);
         }
 
-        if (! $patrimonio && json_last_error() === JSON_ERROR_NONE && ! empty($json['codigo'])) {
-            $codigo = (string) $json['codigo'];
-            $patrimonio = $this->buscarPorCodigo($codigo);
+        if (! $patrimonio && $jsonValido && ! empty($json['codigo'])) {
+            $patrimonio = $this->buscarPorCodigo((string) $json['codigo']);
         }
 
         if (! $patrimonio) {
@@ -47,38 +47,69 @@ class QrScannerController extends Controller
         }
 
         if (! $patrimonio && preg_match('/(?:PAT|INV)-\d+/i', $dados, $m)) {
-            $codigo = strtoupper($m[0]);
-            $patrimonio = $this->buscarPorCodigo($codigo);
+            $patrimonio = $this->buscarPorCodigo(strtoupper($m[0]));
         }
 
         if (! $patrimonio) {
             return response()->json(['sucesso' => false, 'mensagem' => 'Patrimônio não encontrado']);
         }
 
-        $codigoExibicao = $patrimonio->codigo;
-        if (json_last_error() === JSON_ERROR_NONE && ! empty($json['codigo'])) {
-            $codigoExibicao = (string) $json['codigo'];
-        } elseif (preg_match('/(?:PAT|INV)-\d+/i', $dados, $m)) {
-            $codigoExibicao = strtoupper($m[0]);
-        } elseif (in_array($dados, $patrimonio->todosCodigosInventario(), true)) {
-            $codigoExibicao = $dados;
-        }
+        $patrimonio->loadMissing('itensInventario');
+
+        $codigoExibicao = $this->resolverCodigoExibicao($dados, $jsonValido ? $json : null, $patrimonio);
 
         return response()->json([
             'sucesso' => true,
-            'patrimonio' => [
-                'id' => $patrimonio->id,
-                'codigo' => $codigoExibicao,
-                'nome' => $patrimonio->nome,
-                'descricao' => $patrimonio->descricaoParaCodigo($codigoExibicao),
-                'imagem' => $patrimonio->imagemParaCodigo($codigoExibicao),
-                'categoria' => $patrimonio->categoria?->nome,
-                'localizacao' => $patrimonio->localizacao,
-                'responsavel' => $patrimonio->responsavel,
-                'valor_atual' => $patrimonio->valor_atual,
-                'url' => route('patrimonios.patrimonios.show', $patrimonio),
-            ],
+            'patrimonio' => $this->montarResposta($patrimonio, $codigoExibicao),
         ]);
+    }
+
+    private function resolverCodigoExibicao(string $dados, ?array $json, Patrimonio $patrimonio): string
+    {
+        if ($json !== null && ! empty($json['codigo'])) {
+            return (string) $json['codigo'];
+        }
+
+        if (preg_match('/(?:PAT|INV)-\d+/i', $dados, $m)) {
+            return strtoupper($m[0]);
+        }
+
+        if (in_array($dados, $patrimonio->todosCodigosInventario(), true)) {
+            return $dados;
+        }
+
+        return $patrimonio->codigo;
+    }
+
+    private function montarResposta(Patrimonio $patrimonio, string $codigoExibicao): array
+    {
+        $multiplasUnidades = $patrimonio->unidades() > 1;
+        $dadosUnidade = $patrimonio->dadosUnidadeParaCodigo($codigoExibicao);
+
+        return [
+            'id' => $patrimonio->id,
+            'codigo' => $codigoExibicao,
+            'nome' => $patrimonio->nome,
+            'descricao' => $dadosUnidade['descricao'],
+            'imagem' => $dadosUnidade['imagem'],
+            'categoria' => $patrimonio->categoria?->nome,
+            'localizacao' => $patrimonio->localizacao,
+            'responsavel' => $patrimonio->responsavel,
+            'valor_atual' => $patrimonio->valor_atual,
+            'url' => $patrimonio->urlParaCodigo($codigoExibicao),
+            'multiplas_unidades' => $multiplasUnidades,
+            'grupo' => [
+                'codigo' => $patrimonio->codigo,
+                'nome' => $patrimonio->nome,
+                'descricao' => $patrimonio->descricao,
+                'imagem' => $patrimonio->imagemUrl(),
+                'total_unidades' => $patrimonio->unidades(),
+            ],
+            'unidade' => $multiplasUnidades ? [
+                ...$dadosUnidade,
+                'url' => $patrimonio->urlParaCodigo($codigoExibicao),
+            ] : null,
+        ];
     }
 
     private function buscarPorCodigo(string $codigo): ?Patrimonio
@@ -86,10 +117,10 @@ class QrScannerController extends Controller
         $unidade = PatrimonioUnidade::query()->where('codigo', $codigo)->first();
 
         if ($unidade) {
-            return Patrimonio::with('categoria')->find($unidade->patrimonio_id);
+            return Patrimonio::with(['categoria', 'itensInventario'])->find($unidade->patrimonio_id);
         }
 
-        return Patrimonio::with('categoria')->where('codigo', $codigo)->first()
-            ?? Patrimonio::with('categoria')->whereJsonContains('codigos_inventario', $codigo)->first();
+        return Patrimonio::with(['categoria', 'itensInventario'])->where('codigo', $codigo)->first()
+            ?? Patrimonio::with(['categoria', 'itensInventario'])->whereJsonContains('codigos_inventario', $codigo)->first();
     }
 }

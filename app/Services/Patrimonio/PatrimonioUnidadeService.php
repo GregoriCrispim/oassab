@@ -12,6 +12,7 @@ class PatrimonioUnidadeService
     public function __construct(
         private readonly CodigoPatrimonioService $codigoService,
         private readonly PatrimonioFileStorage $fileStorage,
+        private readonly QrCodeService $qrCodeService,
     ) {
     }
 
@@ -165,6 +166,8 @@ class PatrimonioUnidadeService
     public function excluirUnidade(PatrimonioUnidade $unidade): void
     {
         $this->removerImagemUnidade($unidade);
+        $this->qrCodeService->deleteForCodigo($unidade->codigo);
+        $this->fileStorage->deleteLegacyGroupedQrCode($unidade->patrimonio, $unidade->codigo);
         $unidade->delete();
     }
 

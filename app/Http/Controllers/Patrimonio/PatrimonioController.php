@@ -13,6 +13,7 @@ use App\Services\Patrimonio\DepreciacaoService;
 use App\Services\Patrimonio\PatrimonioFileStorage;
 use App\Services\Patrimonio\PatrimonioLogService;
 use App\Services\Patrimonio\PatrimonioUnidadeService;
+use App\Services\Patrimonio\QrCodeService;
 use App\Support\PaginationPerPage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -29,6 +30,7 @@ class PatrimonioController extends Controller
         private readonly PatrimonioFileStorage $fileStorage,
         private readonly PatrimonioLogService $logService,
         private readonly PatrimonioUnidadeService $unidadeService,
+        private readonly QrCodeService $qrCodeService,
     ) {
     }
 
@@ -160,6 +162,8 @@ class PatrimonioController extends Controller
                 $patrimonio,
                 "Patrimônio criado: {$patrimonio->nome} ({$patrimonio->codigoResumo()}, qtd. {$patrimonio->fresh()->unidades()})",
             );
+
+            $this->qrCodeService->syncForPatrimonio($patrimonio->fresh());
         });
 
         $msg = $quantidade > 1
@@ -173,13 +177,22 @@ class PatrimonioController extends Controller
         return redirect()->route('patrimonios.patrimonios.index')->with('status', $msg);
     }
 
-    public function show(Patrimonio $patrimonio): View
+    public function show(Request $request, Patrimonio $patrimonio): View
     {
         $this->authorize('view', $patrimonio);
 
         $patrimonio->load(['categoria.camposAtivos', 'campoValores.campo', 'arquivos', 'manutencoes' => fn ($q) => $q->latest()->limit(5), 'itensInventario']);
 
-        return view('patrimonios.patrimonios.show', compact('patrimonio'));
+        $codigoUnidade = $request->string('unidade')->toString();
+        $unidadeAtiva = null;
+        $dadosUnidadeAtiva = null;
+
+        if ($codigoUnidade !== '' && in_array($codigoUnidade, $patrimonio->todosCodigosInventario(), true)) {
+            $unidadeAtiva = $patrimonio->unidadePorCodigo($codigoUnidade);
+            $dadosUnidadeAtiva = $patrimonio->dadosUnidadeParaCodigo($codigoUnidade);
+        }
+
+        return view('patrimonios.patrimonios.show', compact('patrimonio', 'unidadeAtiva', 'dadosUnidadeAtiva', 'codigoUnidade'));
     }
 
     public function edit(Request $request, Patrimonio $patrimonio): View|RedirectResponse|\Illuminate\Http\JsonResponse
@@ -254,6 +267,7 @@ class PatrimonioController extends Controller
 
             $patrimonio->refresh();
             $this->logService->logModel('UPDATE', $patrimonio, "Patrimônio atualizado: {$patrimonio->nome} (qtd. {$patrimonio->unidades()})");
+            $this->qrCodeService->syncForPatrimonio($patrimonio);
         });
 
         if ($this->wantsFormModal($request)) {
@@ -279,15 +293,18 @@ class PatrimonioController extends Controller
     {
         $this->authorize('view', $patrimonio);
 
+        $this->qrCodeService->syncForPatrimonio($patrimonio);
+
         return response()->json([
             'nome' => $patrimonio->nome,
             'unidades' => $patrimonio->unidades(),
             'codigos' => $patrimonio->todosCodigosInventario(),
+            'qrcodes' => $this->qrCodeService->pathsForPatrimonio($patrimonio),
             'qrcode_base' => route('patrimonios.patrimonios.qrcode', $patrimonio),
         ]);
     }
 
-    public function qrcode(Patrimonio $patrimonio, Request $request, \App\Services\Patrimonio\QrCodeService $qr): Response
+    public function qrcode(Patrimonio $patrimonio, Request $request): Response
     {
         $this->authorize('view', $patrimonio);
 
@@ -297,8 +314,25 @@ class PatrimonioController extends Controller
             abort(404);
         }
 
-        $size = min(400, max(100, $request->integer('size', 300)));
-        $image = $qr->generate($patrimonio, $codigo, $size);
+        $size = min(400, max(100, $request->integer('size', QrCodeService::DEFAULT_SIZE)));
+
+        if ($size === QrCodeService::DEFAULT_SIZE) {
+            $content = $this->qrCodeService->storedContent($codigo);
+
+            if ($content === null) {
+                $this->qrCodeService->store($patrimonio, $codigo);
+                $content = $this->qrCodeService->storedContent($codigo);
+            }
+
+            if ($content !== null) {
+                return response($content, 200, [
+                    'Content-Type' => 'image/svg+xml',
+                    'Content-Disposition' => 'inline; filename="qrcode-'.$codigo.'.svg"',
+                ]);
+            }
+        }
+
+        $image = $this->qrCodeService->generate($patrimonio, $codigo, $size);
 
         return response($image['content'], 200, [
             'Content-Type' => $image['mime'],

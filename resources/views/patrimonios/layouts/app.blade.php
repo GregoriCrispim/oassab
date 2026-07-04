@@ -13,7 +13,7 @@
     ];
 @endphp
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="md:h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,7 +24,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('head')
 </head>
-<body class="min-h-screen bg-oassab-cream">
+<body class="min-h-screen bg-oassab-cream md:h-full md:overflow-hidden">
     <div id="patrimonio-sidebar-backdrop" class="fixed inset-0 z-40 hidden bg-oassab-blue-dark/60 backdrop-blur-sm md:hidden" aria-hidden="true"></div>
 
     <aside
@@ -42,22 +42,24 @@
                 <i class="bi bi-x-lg"></i>
             </button>
         </div>
-        <x-patrimonios.sidebar-nav :sidebar="$sidebar" :user="$user" on-navigate class="overflow-y-auto" />
+        <x-patrimonios.sidebar-nav :sidebar="$sidebar" :user="$user" on-navigate class="min-h-0 overflow-y-auto" />
     </aside>
 
-    <div class="flex min-h-screen">
-        <aside class="hidden w-64 shrink-0 flex-col bg-oassab-blue-dark text-white md:flex">
-            <div class="flex h-20 items-center justify-center border-b border-white/10 px-6">
+    <div class="flex min-h-screen w-full overflow-hidden md:h-screen md:min-h-0">
+        <aside class="fixed inset-y-0 left-0 z-30 hidden h-screen w-64 flex-col bg-oassab-blue-dark text-white md:flex">
+            <div class="flex h-20 shrink-0 items-center justify-center border-b border-white/10 px-6">
                 <a href="{{ route('patrimonios.dashboard') }}" class="flex items-center gap-3">
                     <img src="/images/icone.png" alt="OASSAB" class="h-10 w-auto">
                     <span class="text-sm font-semibold uppercase tracking-[0.2em] text-oassab-orange">Patrimônio</span>
                 </a>
             </div>
-            <x-patrimonios.sidebar-nav :sidebar="$sidebar" :user="$user" />
+            <x-patrimonios.sidebar-nav :sidebar="$sidebar" :user="$user" class="min-h-0 overflow-y-auto" />
         </aside>
 
-        <div class="flex min-w-0 flex-1 flex-col">
-            <header class="flex min-h-16 items-center justify-between gap-3 border-b border-oassab-border bg-white px-4 py-3 shadow-sm sm:px-6 md:h-20 md:py-0">
+        <div class="hidden w-64 shrink-0 md:block" aria-hidden="true"></div>
+
+        <div class="flex min-h-0 min-w-0 flex-1 flex-col md:h-screen md:overflow-hidden">
+            <header class="flex shrink-0 min-h-16 items-center justify-between gap-3 border-b border-oassab-border bg-white px-4 py-3 shadow-sm sm:px-6 md:h-20 md:py-0">
                 <div class="flex min-w-0 items-center gap-3">
                     <button
                         type="button"
@@ -91,7 +93,7 @@
                 </div>
             </header>
 
-            <main class="flex-1 p-4 sm:p-6">
+            <main class="min-h-0 flex-1 p-4 sm:p-6 md:overflow-y-auto">
                 @if (session('status') || request('status'))
                     <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 sm:mb-6">
                         {{ session('status') ?? request('status') }}

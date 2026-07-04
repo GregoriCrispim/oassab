@@ -7,22 +7,32 @@ use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel;
 use Endroid\QrCode\Writer\SvgWriter;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 
 class QrCodeService
 {
+    public const DEFAULT_SIZE = 300;
+
+    public function __construct(
+        private readonly PatrimonioFileStorage $fileStorage,
+    ) {}
+
     public function dataForPatrimonio(Patrimonio $patrimonio, ?string $codigoInventario = null): string
     {
         $codigo = $codigoInventario ?? $patrimonio->codigo;
+        $unidade = $patrimonio->dadosUnidadeParaCodigo($codigo);
 
         return json_encode([
             'id' => $patrimonio->id,
             'codigo' => $codigo,
             'nome' => $patrimonio->nome,
-            'url' => route('patrimonios.patrimonios.show', $patrimonio),
+            'descricao' => $unidade['descricao'],
+            'url' => $patrimonio->urlParaCodigo($codigo),
         ], JSON_UNESCAPED_UNICODE);
     }
 
-    public function generate(Patrimonio $patrimonio, ?string $codigoInventario = null, int $size = 300): array
+    public function generate(Patrimonio $patrimonio, ?string $codigoInventario = null, int $size = self::DEFAULT_SIZE): array
     {
         $builder = new Builder(
             writer: new SvgWriter,
@@ -37,5 +47,106 @@ class QrCodeService
             'content' => $builder->build()->getString(),
             'mime' => 'image/svg+xml',
         ];
+    }
+
+    public function store(Patrimonio $patrimonio, string $codigoInventario, int $size = self::DEFAULT_SIZE): string
+    {
+        $image = $this->generate($patrimonio, $codigoInventario, $size);
+
+        return $this->fileStorage->storeQrCode($image['content'], $codigoInventario);
+    }
+
+    public function publicPath(string $codigoInventario): string
+    {
+        return '/storage/'.$this->fileStorage->qrCodeRelativePath($codigoInventario);
+    }
+
+    /** @return array<string, string> */
+    public function pathsForPatrimonio(Patrimonio $patrimonio): array
+    {
+        $paths = [];
+
+        foreach ($patrimonio->todosCodigosInventario() as $codigo) {
+            $paths[$codigo] = $this->publicPath($codigo);
+        }
+
+        return $paths;
+    }
+
+    public function syncForPatrimonio(Patrimonio $patrimonio): void
+    {
+        $patrimonio->refresh();
+        $codigos = $patrimonio->todosCodigosInventario();
+
+        foreach ($codigos as $codigo) {
+            $this->store($patrimonio, $codigo);
+            $this->fileStorage->deleteLegacyGroupedQrCode($patrimonio, $codigo);
+        }
+
+        $this->cleanupLegacyGroupedFolder($patrimonio, $codigos);
+    }
+
+    public function syncAll(): int
+    {
+        $count = 0;
+
+        Patrimonio::query()->orderBy('id')->chunkById(50, function ($patrimonios) use (&$count) {
+            foreach ($patrimonios as $patrimonio) {
+                $this->syncForPatrimonio($patrimonio);
+                $count++;
+            }
+        });
+
+        return $count;
+    }
+
+    public function storedContent(string $codigoInventario): ?string
+    {
+        $relative = $this->fileStorage->qrCodeRelativePath($codigoInventario);
+
+        if (! Storage::disk('public')->exists($relative)) {
+            return null;
+        }
+
+        return Storage::disk('public')->get($relative);
+    }
+
+    public function deleteForCodigo(string $codigoInventario): void
+    {
+        $this->fileStorage->deleteQrCodeForCodigo($codigoInventario);
+    }
+
+    /** @param  array<int, string>  $codigosAtivos */
+    private function cleanupLegacyGroupedFolder(Patrimonio $patrimonio, array $codigosAtivos): void
+    {
+        if ($patrimonio->unidades() <= 1) {
+            return;
+        }
+
+        $legacyDir = storage_path('app/public/patrimonios/'.$patrimonio->codigo.'/qrcodes');
+
+        if (! is_dir($legacyDir)) {
+            return;
+        }
+
+        foreach (glob($legacyDir.'/*.svg') ?: [] as $file) {
+            $codigo = basename($file, '.svg');
+
+            if (! in_array($codigo, $codigosAtivos, true)) {
+                $this->fileStorage->deleteLegacyGroupedQrCode($patrimonio, $codigo);
+            }
+        }
+
+        $remaining = glob($legacyDir.'/*.svg') ?: [];
+
+        if ($remaining === []) {
+            Storage::disk('public')->deleteDirectory('patrimonios/'.$patrimonio->codigo.'/qrcodes');
+
+            $publicLegacyDir = public_path('storage/patrimonios/'.$patrimonio->codigo.'/qrcodes');
+
+            if (is_dir($publicLegacyDir)) {
+                File::deleteDirectory($publicLegacyDir);
+            }
+        }
     }
 }

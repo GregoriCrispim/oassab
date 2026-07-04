@@ -27,11 +27,14 @@
     </div>
 
     <div class="mt-6 grid gap-4 sm:mt-8 sm:gap-6 lg:grid-cols-2">
-        <div class="rounded-xl border border-oassab-border bg-white p-4 shadow-sm sm:p-6">
+        <div class="min-w-0 overflow-hidden rounded-xl border border-oassab-border bg-white p-4 shadow-sm sm:p-6">
             <h2 class="mb-4 font-heading text-lg font-bold text-oassab-blue">Depreciação por Categoria</h2>
-            <div class="relative h-56 sm:h-64">
-                <canvas id="chartDepreciacao"></canvas>
+            <div class="relative h-56 min-w-0 max-w-full overflow-hidden sm:h-64">
+                <canvas id="chartDepreciacao" class="block h-full w-full max-w-full"></canvas>
             </div>
+            <script type="application/json" id="chartDepreciacaoData">
+                @json($chart)
+            </script>
         </div>
         <div class="rounded-xl border border-oassab-border bg-white p-4 shadow-sm sm:p-6">
             <h2 class="mb-4 font-heading text-lg font-bold text-oassab-blue">Patrimônios por Categoria</h2>
@@ -84,19 +87,26 @@
 document.addEventListener('DOMContentLoaded', () => {
     const ctx = document.getElementById('chartDepreciacao');
     if (!ctx) return;
+
+    const chartDataElement = document.getElementById('chartDepreciacaoData');
+    if (!chartDataElement) return;
+
+    const chartData = JSON.parse(chartDataElement.textContent);
+    const isMobile = window.matchMedia('(max-width: 640px)').matches;
+
     new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: @json($chart['labels']),
+            labels: chartData.labels,
             datasets: [
                 {
                     label: 'Valor Atual',
-                    data: @json($chart['valores']),
+                    data: chartData.valores,
                     backgroundColor: '#0052CC',
                 },
                 {
                     label: 'Depreciado',
-                    data: @json($chart['depreciados']),
+                    data: chartData.depreciados,
                     backgroundColor: '#f97316',
                 }
             ]
@@ -104,7 +114,39 @@ document.addEventListener('DOMContentLoaded', () => {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true } }
+            layout: {
+                padding: 0,
+            },
+            plugins: {
+                legend: {
+                    labels: {
+                        boxWidth: isMobile ? 12 : 40,
+                        font: {
+                            size: isMobile ? 10 : 12,
+                        },
+                    },
+                },
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        autoSkip: true,
+                        maxRotation: isMobile ? 35 : 50,
+                        minRotation: 0,
+                        font: {
+                            size: isMobile ? 10 : 12,
+                        },
+                    },
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        font: {
+                            size: isMobile ? 10 : 12,
+                        },
+                    },
+                },
+            },
         }
     });
 });

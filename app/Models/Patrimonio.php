@@ -194,6 +194,31 @@ class Patrimonio extends Model
         return '/storage/'.ltrim($this->imagem, '/');
     }
 
+    public function urlParaCodigo(?string $codigo = null): string
+    {
+        $codigo ??= $this->codigo;
+        $url = route('patrimonios.patrimonios.show', $this);
+
+        if ($this->unidades() > 1 && in_array($codigo, $this->todosCodigosInventario(), true)) {
+            return $url.'?unidade='.urlencode($codigo);
+        }
+
+        return $url;
+    }
+
+    public function dadosUnidadeParaCodigo(string $codigo): array
+    {
+        $unidade = $this->unidadePorCodigo($codigo);
+
+        return [
+            'codigo' => $codigo,
+            'descricao' => $this->descricaoParaCodigo($codigo),
+            'imagem' => $this->imagemParaCodigo($codigo),
+            'tem_foto_propria' => (bool) $unidade?->imagem,
+            'tem_descricao_propria' => filled($unidade?->descricao),
+        ];
+    }
+
     public function scopeAtivos($query)
     {
         return $query->where('ativo', true);

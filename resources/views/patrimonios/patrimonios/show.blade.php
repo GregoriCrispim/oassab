@@ -39,6 +39,41 @@
         </div>
     </div>
 
+    @if ($dadosUnidadeAtiva && $patrimonio->unidades() > 1)
+        <div id="unidade-ativa" class="mb-6 overflow-hidden rounded-xl border-2 border-oassab-orange bg-white shadow-sm">
+            <div class="border-b border-oassab-border bg-oassab-orange/10 px-4 py-3 sm:px-6">
+                <p class="text-xs font-semibold uppercase tracking-wide text-oassab-orange">Unidade escaneada</p>
+                <p class="font-mono text-lg font-bold text-oassab-blue">{{ $dadosUnidadeAtiva['codigo'] }}</p>
+            </div>
+            <div class="grid gap-4 p-4 sm:grid-cols-[auto,1fr] sm:items-start sm:p-6">
+                @if ($dadosUnidadeAtiva['imagem'])
+                    <img
+                        src="{{ $dadosUnidadeAtiva['imagem'] }}"
+                        alt="Unidade {{ $dadosUnidadeAtiva['codigo'] }}"
+                        class="mx-auto h-40 w-40 rounded-xl border border-oassab-border bg-white object-contain p-2 sm:mx-0"
+                    >
+                @endif
+                <div class="min-w-0">
+                    @if ($dadosUnidadeAtiva['descricao'])
+                        <p class="text-sm text-oassab-gray">{{ $dadosUnidadeAtiva['descricao'] }}</p>
+                    @else
+                        <p class="text-sm italic text-oassab-gray">Sem descrição específica para esta unidade.</p>
+                    @endif
+                    <dl class="mt-4 space-y-2 text-sm">
+                        <div class="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4">
+                            <dt class="text-oassab-gray">Conjunto</dt>
+                            <dd class="font-medium sm:text-right">{{ $patrimonio->nome }} ({{ $patrimonio->unidades() }} un.)</dd>
+                        </div>
+                        <div class="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4">
+                            <dt class="text-oassab-gray">Código do grupo</dt>
+                            <dd class="font-mono sm:text-right">{{ $patrimonio->codigo }}</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    @endif
+
     @php
         $imagemUrl = $patrimonio->imagemUrl();
     @endphp
@@ -77,7 +112,14 @@
                     <p class="mb-3 text-xs font-semibold uppercase text-oassab-gray">Unidades de inventário</p>
                     <div class="space-y-3">
                         @foreach ($patrimonio->itensInventario as $unidade)
-                            <div class="flex flex-col gap-3 rounded-xl border border-oassab-border bg-oassab-cream/20 p-4 sm:flex-row sm:items-start">
+                            <div
+                                id="unidade-{{ $unidade->codigo }}"
+                                @class([
+                                    'flex flex-col gap-3 rounded-xl border bg-oassab-cream/20 p-4 sm:flex-row sm:items-start',
+                                    'border-oassab-orange ring-2 ring-oassab-orange/30' => ($codigoUnidade ?? '') === $unidade->codigo,
+                                    'border-oassab-border' => ($codigoUnidade ?? '') !== $unidade->codigo,
+                                ])
+                            >
                                 @if ($unidade->imagemEfetivaUrl())
                                     <img
                                         src="{{ $unidade->imagemEfetivaUrl() }}"

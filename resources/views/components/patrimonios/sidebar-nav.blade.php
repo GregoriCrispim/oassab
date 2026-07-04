@@ -17,7 +17,7 @@
     @endforeach
 </nav>
 
-<div class="border-t border-white/10 p-4 space-y-2">
+<div class="shrink-0 border-t border-white/10 p-4 space-y-2">
     @if ($user->is_admin)
         <a href="{{ route('admin.dashboard') }}"
            @if ($onNavigate) data-patrimonio-sidebar-close @endif

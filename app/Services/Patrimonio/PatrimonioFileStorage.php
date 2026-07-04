@@ -82,6 +82,10 @@ class PatrimonioFileStorage
 
     public function purgeAll(Patrimonio $patrimonio): void
     {
+        foreach ($patrimonio->todosCodigosInventario() as $codigo) {
+            $this->deleteQrCodeForCodigo($codigo);
+        }
+
         $folder = 'patrimonios/'.$patrimonio->codigo;
 
         Storage::disk('public')->deleteDirectory($folder);
@@ -104,6 +108,72 @@ class PatrimonioFileStorage
         }
 
         return '/storage/'.ltrim($path, '/');
+    }
+
+    public function qrCodeRelativePath(string $codigoInventario): string
+    {
+        return 'patrimonios/'.$codigoInventario.'/qrcodes/'.$codigoInventario.'.svg';
+    }
+
+    public function legacyGroupedQrCodeRelativePath(Patrimonio $patrimonio, string $codigoInventario): string
+    {
+        return 'patrimonios/'.$patrimonio->codigo.'/qrcodes/'.$codigoInventario.'.svg';
+    }
+
+    public function storeQrCode(string $content, string $codigoInventario): string
+    {
+        $relativePath = $this->qrCodeRelativePath($codigoInventario);
+        $destination = storage_path('app/public/'.$relativePath);
+
+        File::ensureDirectoryExists(dirname($destination));
+        File::put($destination, $content);
+        $this->publishPublicFile($relativePath);
+
+        return '/storage/'.$relativePath;
+    }
+
+    public function deleteQrCodeForCodigo(string $codigoInventario): void
+    {
+        $folder = 'patrimonios/'.$codigoInventario.'/qrcodes';
+
+        Storage::disk('public')->deleteDirectory($folder);
+
+        $publicFolder = public_path('storage/'.$folder);
+
+        if (is_dir($publicFolder)) {
+            File::deleteDirectory($publicFolder);
+        }
+
+        $this->deleteEmptyPatrimonioFolder($codigoInventario);
+    }
+
+    public function deleteLegacyGroupedQrCode(Patrimonio $patrimonio, string $codigoInventario): void
+    {
+        if ($patrimonio->codigo === $codigoInventario) {
+            return;
+        }
+
+        $this->deletePath('/storage/'.$this->legacyGroupedQrCodeRelativePath($patrimonio, $codigoInventario));
+    }
+
+    public function qrCodeExists(string $codigoInventario): bool
+    {
+        return Storage::disk('public')->exists($this->qrCodeRelativePath($codigoInventario));
+    }
+
+    private function deleteEmptyPatrimonioFolder(string $codigoInventario): void
+    {
+        $folder = 'patrimonios/'.$codigoInventario;
+
+        if (Storage::disk('public')->exists($folder) && empty(Storage::disk('public')->allFiles($folder))) {
+            Storage::disk('public')->deleteDirectory($folder);
+
+            $publicFolder = public_path('storage/'.$folder);
+
+            if (is_dir($publicFolder)) {
+                File::deleteDirectory($publicFolder);
+            }
+        }
     }
 
     private function relativePath(?string $filePath): ?string

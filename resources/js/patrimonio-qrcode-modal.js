@@ -18,6 +18,7 @@ if (modal) {
     let state = {
         nome: '',
         qrcodeBase: '',
+        qrcodes: {},
         codigos: [],
     };
 
@@ -27,6 +28,10 @@ if (modal) {
     const getColumns = () => settings.cols?.value || 'auto';
 
     const qrcodeUrl = (codigo) => {
+        if (state.qrcodes[codigo]) {
+            return state.qrcodes[codigo];
+        }
+
         const params = new URLSearchParams({
             codigo,
             size: String(getSize()),
@@ -95,6 +100,7 @@ if (modal) {
             state = {
                 nome: data.nome,
                 qrcodeBase: data.qrcode_base,
+                qrcodes: data.qrcodes || {},
                 codigos: data.codigos || [],
             };
 
