@@ -27,9 +27,11 @@ jobs:
           extensions: mbstring, gd, dom, xml, bcmath, curl, zip, fileinfo
           coverage: none
 
-      # Instala as dependências PHP (endroid/qr-code etc.) e envia o vendor/
-      # atualizado por FTP. Sem isto o servidor mantém um vendor antigo e a
-      # geração de QR code quebra (HTTP 500).
+      # Instala as dependências PHP apenas no runner, para os comandos artisan
+      # abaixo (static-content:sync, patrimonios:sync-qrcodes) funcionarem.
+      # O vendor/ NÃO é enviado por FTP aqui (são ~40 mil arquivos e a
+      # hospedagem compartilhada recusa a conexão de dados). O vendor/ é
+      # publicado como um único vendor.zip pelo workflow "deploy-vendor.yml".
       - name: Install PHP dependencies
         run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
@@ -89,6 +91,8 @@ jobs:
             **/.git*
             **/.git*/**
             **/node_modules/**
+            **/vendor/**
+            vendor.zip
             .github/**
 
       - name: Clear production page cache (FTP)

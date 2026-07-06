@@ -1,0 +1,58 @@
+name: Publicar vendor (zip) no Hostgator
+
+# Envia as dependências PHP (vendor/) como UM único arquivo vendor.zip.
+# Enviar o vendor/ arquivo a arquivo por FTP (~40 mil arquivos) faz a
+# hospedagem compartilhada recusar a conexão de dados (ECONNREFUSED).
+# Aqui geramos um único zip e enviamos numa só conexão.
+#
+# Depois que o zip chegar, extraia-o pelo Gerenciador de Arquivos do cPanel
+# na raiz do projeto (onde ficam artisan/public), substituindo o vendor/.
+# Rode este workflow manualmente sempre que composer.json/composer.lock mudar.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish-vendor:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, gd, dom, xml, bcmath, curl, zip, fileinfo
+          coverage: none
+
+      - name: Install PHP dependencies (produção)
+        run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+      - name: Compactar vendor em um único zip
+        run: |
+          zip -qr vendor.zip vendor
+          ls -lh vendor.zip
+
+      - name: Enviar vendor.zip via FTP (uma conexão)
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+          lftp -e "
+            set ftp:ssl-force true;
+            set ssl:verify-certificate no;
+            set net:timeout 120;
+            set net:max-retries 3;
+            open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_SERVER }};
+            put -O ./ vendor.zip;
+            bye
+          "
+
+      - name: Próximos passos
+        run: |
+          echo "vendor.zip enviado para a raiz do servidor."
+          echo "Agora, no cPanel > Gerenciador de Arquivos:"
+          echo "  1. Abra a pasta do projeto (onde ficam artisan/ e public/)."
+          echo "  2. (Opcional) apague a pasta vendor/ antiga."
+          echo "  3. Selecione vendor.zip e clique em Extrair (Extract)."
+          echo "  4. Confirme a extração na mesma pasta e apague o vendor.zip depois."
