@@ -4,7 +4,7 @@ Site institucional da **OASSAB — Obras de Assistência e de Serviço Social da
 
 ## Stack
 
-- **PHP 8.2+**
+- **PHP 8.3+**
 - **Laravel 11**
 - **MySQL 5.7+** (HostGator em produção)
 - **Blade** + **Tailwind CSS 3** + **Vite**
