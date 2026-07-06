@@ -301,6 +301,40 @@ class PatrimonioController extends Controller
             'codigos' => $patrimonio->todosCodigosInventario(),
             'qrcodes' => $this->qrCodeService->pathsForPatrimonio($patrimonio),
             'qrcode_base' => route('patrimonios.patrimonios.qrcode', $patrimonio),
+            'regenerar_url' => route('patrimonios.patrimonios.qrcodes.regenerar', $patrimonio),
+            'pode_regenerar' => \Illuminate\Support\Facades\Gate::allows('update', $patrimonio),
+        ]);
+    }
+
+    public function regenerarQrcodes(Patrimonio $patrimonio, Request $request): \Illuminate\Http\JsonResponse
+    {
+        $this->authorize('update', $patrimonio);
+
+        $todos = $patrimonio->todosCodigosInventario();
+        $solicitados = $request->input('codigos', []);
+
+        if (! is_array($solicitados) || $solicitados === []) {
+            $codigos = $todos;
+        } else {
+            $solicitados = array_map('strval', $solicitados);
+            $codigos = array_values(array_filter($todos, fn (string $c) => in_array($c, $solicitados, true)));
+        }
+
+        $resultado = $this->qrCodeService->regenerate($patrimonio, $codigos);
+
+        $version = now()->timestamp;
+        $urls = [];
+
+        foreach ($codigos as $codigo) {
+            $urls[$codigo] = $this->qrCodeService->dynamicUrl($patrimonio, $codigo).'&v='.$version;
+        }
+
+        return response()->json([
+            'sucesso' => true,
+            'regerados' => $resultado['regerados'],
+            'falhas' => $resultado['falhas'],
+            'qrcodes' => $urls,
+            'version' => $version,
         ]);
     }
 

@@ -94,6 +94,7 @@ Route::middleware(['auth', 'patrimonio'])
         Route::get('/dashboard', [PatrimonioDashboardController::class, 'index'])->name('dashboard');
 
         Route::get('patrimonios/{patrimonio}/qrcodes/data', [PatrimonioController::class, 'qrcodesData'])->name('patrimonios.qrcodes.data');
+        Route::post('patrimonios/{patrimonio}/qrcodes/regenerar', [PatrimonioController::class, 'regenerarQrcodes'])->name('patrimonios.qrcodes.regenerar');
         Route::get('patrimonios/{patrimonio}/qrcode', [PatrimonioController::class, 'qrcode'])->name('patrimonios.qrcode');
         Route::post('patrimonios/{patrimonio}', [PatrimonioController::class, 'update'])->name('patrimonios.update');
         Route::resource('patrimonios', PatrimonioController::class)->except(['update']);

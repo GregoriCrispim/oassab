@@ -7,6 +7,12 @@ if (modal) {
     const loadingEl = document.getElementById('qrcode-modal-loading');
     const printBtn = document.getElementById('qrcode-modal-print');
     const printRoot = document.getElementById('qrcode-print-root');
+    const regenerateBtn = document.getElementById('qrcode-modal-regenerate');
+    const regenerateLabel = regenerateBtn?.querySelector('[data-regenerate-label]');
+    const selectAllWrap = document.getElementById('qrcode-select-all-wrap');
+    const selectAllInput = document.getElementById('qrcode-select-all');
+    const statusEl = document.getElementById('qrcode-modal-status');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
     const settings = {
         size: document.getElementById('qrcode-setting-size'),
@@ -20,6 +26,21 @@ if (modal) {
         qrcodeBase: '',
         qrcodes: {},
         codigos: [],
+        regenerarUrl: '',
+        podeRegenerar: false,
+    };
+
+    const selecionados = new Set();
+    let regenerando = false;
+
+    const setStatus = (msg = '', tipo = 'info') => {
+        if (! statusEl) {
+            return;
+        }
+        statusEl.textContent = msg;
+        statusEl.className = tipo === 'erro'
+            ? 'text-sm text-red-600'
+            : (tipo === 'ok' ? 'text-sm text-green-600' : 'text-sm text-oassab-gray');
     };
 
     const getSize = () => parseInt(settings.size?.value || '180', 10);
@@ -52,6 +73,24 @@ if (modal) {
             : `repeat(${cols}, minmax(0, 1fr))`;
     };
 
+    const updateRegenerateLabel = () => {
+        if (! regenerateLabel) {
+            return;
+        }
+        regenerateLabel.textContent = selecionados.size > 0
+            ? `Regenerar selecionados (${selecionados.size})`
+            : 'Regenerar todos';
+    };
+
+    const syncSelectAll = () => {
+        if (! selectAllInput) {
+            return;
+        }
+        const total = state.codigos.length;
+        selectAllInput.checked = total > 0 && selecionados.size === total;
+        selectAllInput.indeterminate = selecionados.size > 0 && selecionados.size < total;
+    };
+
     const renderGrid = () => {
         applyGridStyles();
         gridEl.innerHTML = '';
@@ -59,6 +98,27 @@ if (modal) {
         state.codigos.forEach((codigo) => {
             const card = document.createElement('div');
             card.className = 'qrcode-modal__item';
+
+            if (state.podeRegenerar) {
+                const check = document.createElement('label');
+                check.className = 'qrcode-modal__select';
+                const input = document.createElement('input');
+                input.type = 'checkbox';
+                input.className = 'js-qrcode-select h-4 w-4 rounded border-oassab-border text-oassab-blue focus:ring-oassab-blue';
+                input.value = codigo;
+                input.checked = selecionados.has(codigo);
+                input.addEventListener('change', () => {
+                    if (input.checked) {
+                        selecionados.add(codigo);
+                    } else {
+                        selecionados.delete(codigo);
+                    }
+                    updateRegenerateLabel();
+                    syncSelectAll();
+                });
+                check.appendChild(input);
+                card.appendChild(check);
+            }
 
             const label = document.createElement('p');
             label.className = 'qrcode-modal__code';
@@ -78,6 +138,59 @@ if (modal) {
             card.append(label, imageWrap);
             gridEl.appendChild(card);
         });
+
+        updateRegenerateLabel();
+        syncSelectAll();
+    };
+
+    const regenerate = async () => {
+        if (regenerando || ! state.regenerarUrl) {
+            return;
+        }
+
+        const alvo = selecionados.size > 0 ? [...selecionados] : [...state.codigos];
+
+        regenerando = true;
+        regenerateBtn?.setAttribute('disabled', 'disabled');
+        setStatus('Regenerando QR codes...');
+
+        try {
+            const response = await fetch(state.regenerarUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({ codigos: alvo }),
+            });
+
+            if (! response.ok) {
+                throw new Error('Falha ao regenerar.');
+            }
+
+            const data = await response.json();
+            Object.entries(data.qrcodes || {}).forEach(([codigo, url]) => {
+                state.qrcodes[codigo] = url;
+            });
+
+            renderGrid();
+
+            const total = (data.regerados || []).length;
+            const falhas = (data.falhas || []).length;
+            setStatus(
+                falhas > 0
+                    ? `${total} regenerado(s), ${falhas} com falha (usando geração dinâmica).`
+                    : `${total} QR code(s) regenerado(s).`,
+                falhas > 0 ? 'erro' : 'ok',
+            );
+        } catch (error) {
+            setStatus('Não foi possível regenerar os QR codes.', 'erro');
+        } finally {
+            regenerando = false;
+            regenerateBtn?.removeAttribute('disabled');
+        }
     };
 
     const openModal = async (url) => {
@@ -86,6 +199,8 @@ if (modal) {
         document.body.classList.add('overflow-hidden');
         loadingEl.classList.remove('hidden');
         gridEl.innerHTML = '';
+        selecionados.clear();
+        setStatus('');
 
         try {
             const response = await fetch(url, {
@@ -102,7 +217,14 @@ if (modal) {
                 qrcodeBase: data.qrcode_base,
                 qrcodes: data.qrcodes || {},
                 codigos: data.codigos || [],
+                regenerarUrl: data.regenerar_url || '',
+                podeRegenerar: Boolean(data.pode_regenerar),
             };
+
+            const mostrarControles = state.podeRegenerar && state.codigos.length > 0;
+            regenerateBtn?.classList.toggle('hidden', ! mostrarControles);
+            selectAllWrap?.classList.toggle('hidden', ! mostrarControles);
+            selectAllWrap?.classList.toggle('flex', mostrarControles);
 
             titleEl.textContent = data.nome;
             subtitleEl.textContent = `${data.codigos.length} QR code(s) de inventário`;
@@ -228,4 +350,13 @@ if (modal) {
     });
 
     printBtn?.addEventListener('click', printQrcodes);
+    regenerateBtn?.addEventListener('click', regenerate);
+
+    selectAllInput?.addEventListener('change', () => {
+        selecionados.clear();
+        if (selectAllInput.checked) {
+            state.codigos.forEach((codigo) => selecionados.add(codigo));
+        }
+        renderGrid();
+    });
 }

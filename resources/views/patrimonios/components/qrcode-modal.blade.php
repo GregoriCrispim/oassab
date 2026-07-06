@@ -74,13 +74,24 @@
                 </div>
             </div>
 
-            <div class="flex shrink-0 flex-wrap items-center justify-end gap-3 border-t border-oassab-border px-6 py-4">
-                <button type="button" class="rounded-lg border border-oassab-border px-4 py-2 text-sm font-semibold text-oassab-blue transition hover:bg-oassab-cream" data-qrcode-close>
-                    Fechar
-                </button>
-                <button type="button" id="qrcode-modal-print" class="btn-blue">
-                    <i class="bi bi-printer"></i> Imprimir
-                </button>
+            <div class="flex shrink-0 flex-wrap items-center gap-3 border-t border-oassab-border px-6 py-4">
+                <label id="qrcode-select-all-wrap" class="hidden items-center gap-2 text-sm text-oassab-blue">
+                    <input type="checkbox" id="qrcode-select-all" class="h-4 w-4 rounded border-oassab-border text-oassab-blue focus:ring-oassab-blue">
+                    Selecionar todos
+                </label>
+                <span id="qrcode-modal-status" class="text-sm text-oassab-gray" role="status" aria-live="polite"></span>
+
+                <div class="ml-auto flex flex-wrap items-center gap-3">
+                    <button type="button" class="rounded-lg border border-oassab-border px-4 py-2 text-sm font-semibold text-oassab-blue transition hover:bg-oassab-cream" data-qrcode-close>
+                        Fechar
+                    </button>
+                    <button type="button" id="qrcode-modal-regenerate" class="hidden rounded-lg border border-oassab-orange px-4 py-2 text-sm font-semibold text-oassab-orange transition hover:bg-oassab-orange/10">
+                        <i class="bi bi-arrow-repeat"></i> <span data-regenerate-label>Regenerar todos</span>
+                    </button>
+                    <button type="button" id="qrcode-modal-print" class="btn-blue">
+                        <i class="bi bi-printer"></i> Imprimir
+                    </button>
+                </div>
             </div>
         </div>
     </div>

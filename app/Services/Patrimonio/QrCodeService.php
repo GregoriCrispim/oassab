@@ -91,8 +91,10 @@ class QrCodeService
     }
 
     /**
-     * Retorna a melhor URL para cada código: o arquivo estático quando existir,
-     * ou a rota de geração dinâmica como fallback (sempre disponível).
+     * URLs para exibição dos QR codes. Sempre usa a rota de geração
+     * (`patrimonios.patrimonios.qrcode`), que serve o arquivo em cache quando
+     * existe ou gera o SVG em memória caso contrário. Assim a imagem nunca
+     * quebra, mesmo quando o espelho public/storage está fora de sincronia.
      *
      * @return array<string, string>
      */
@@ -101,12 +103,34 @@ class QrCodeService
         $paths = [];
 
         foreach ($patrimonio->todosCodigosInventario() as $codigo) {
-            $paths[$codigo] = $this->fileStorage->qrCodeExists($codigo)
-                ? $this->publicPath($codigo)
-                : $this->dynamicUrl($patrimonio, $codigo);
+            $paths[$codigo] = $this->dynamicUrl($patrimonio, $codigo);
         }
 
         return $paths;
+    }
+
+    /**
+     * Regera (sobrescreve) os arquivos de QR code informados. Best-effort:
+     * códigos que não puderam ser gravados em disco continuam disponíveis
+     * pela geração dinâmica.
+     *
+     * @param  array<int, string>  $codigos
+     * @return array{regerados: array<int, string>, falhas: array<int, string>}
+     */
+    public function regenerate(Patrimonio $patrimonio, array $codigos): array
+    {
+        $regerados = [];
+        $falhas = [];
+
+        foreach ($codigos as $codigo) {
+            if ($this->storeSafely($patrimonio, $codigo)) {
+                $regerados[] = $codigo;
+            } else {
+                $falhas[] = $codigo;
+            }
+        }
+
+        return ['regerados' => $regerados, 'falhas' => $falhas];
     }
 
     public function syncForPatrimonio(Patrimonio $patrimonio): void

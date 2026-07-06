@@ -134,10 +134,13 @@ class PatrimonioSystemTest extends TestCase
         $this->assertFileExists(storage_path('app/public/'.$relativePath));
         $this->assertFileExists(public_path('storage/'.$relativePath));
 
+        $expectedUrl = route('patrimonios.patrimonios.qrcode', [$patrimonio, 'codigo' => $patrimonio->codigo]);
+
         $this->actingAs($this->admin)
             ->getJson(route('patrimonios.patrimonios.qrcodes.data', $patrimonio))
             ->assertOk()
-            ->assertJsonPath('qrcodes.'.$patrimonio->codigo, '/storage/'.$relativePath);
+            ->assertJsonPath('qrcodes.'.$patrimonio->codigo, $expectedUrl)
+            ->assertJsonPath('pode_regenerar', true);
     }
 
     public function test_multi_unit_patrimonio_gets_one_qr_code_per_inventory_code(): void
@@ -283,6 +286,64 @@ class PatrimonioSystemTest extends TestCase
             ->get($qrcodes[$patrimonio->codigo])
             ->assertOk()
             ->assertHeader('Content-Type', 'image/svg+xml');
+    }
+
+    public function test_admin_can_regenerate_selected_qrcodes(): void
+    {
+        $categoria = PatrimonioCategoria::query()->first();
+
+        $this->actingAs($this->admin)
+            ->post(route('patrimonios.patrimonios.store'), [
+                'nome' => 'Lote para regenerar',
+                'data_aquisicao' => now()->toDateString(),
+                'valor_aquisicao' => 200,
+                'indice_depreciacao' => 10,
+                'patrimonio_categoria_id' => $categoria->id,
+                'quantidade' => 3,
+                'ativo' => 1,
+            ]);
+
+        $patrimonio = Patrimonio::query()->where('nome', 'Lote para regenerar')->first();
+        $codigos = $patrimonio->todosCodigosInventario();
+        $alvo = $codigos[1];
+        $caminho = storage_path('app/public/patrimonios/'.$alvo.'/qrcodes/'.$alvo.'.svg');
+
+        \Illuminate\Support\Facades\File::delete($caminho);
+        $this->assertFileDoesNotExist($caminho);
+
+        $response = $this->actingAs($this->admin)
+            ->postJson(route('patrimonios.patrimonios.qrcodes.regenerar', $patrimonio), ['codigos' => [$alvo]])
+            ->assertOk()
+            ->assertJsonPath('sucesso', true);
+
+        $this->assertSame([$alvo], $response->json('regerados'));
+        $this->assertFileExists($caminho);
+        $this->assertStringContainsString('v=', $response->json('qrcodes.'.$alvo));
+    }
+
+    public function test_leitor_cannot_regenerate_qrcodes(): void
+    {
+        $categoria = PatrimonioCategoria::query()->first();
+
+        $patrimonio = Patrimonio::query()->create([
+            'codigo' => 'PAT-777',
+            'quantidade' => 1,
+            'nome' => 'Bloqueio leitor',
+            'valor_aquisicao' => 100,
+            'indice_depreciacao' => 10,
+            'valor_depreciado' => 0,
+            'valor_atual' => 100,
+            'data_aquisicao' => now(),
+            'patrimonio_categoria_id' => $categoria->id,
+            'ativo' => true,
+            'created_by' => $this->admin->id,
+        ]);
+
+        $leitor = User::factory()->create(['patrimonio_role' => 'leitor']);
+
+        $this->actingAs($leitor)
+            ->postJson(route('patrimonios.patrimonios.qrcodes.regenerar', $patrimonio), ['codigos' => ['PAT-777']])
+            ->assertForbidden();
     }
 
     public function test_reports_are_available_for_admin(): void
