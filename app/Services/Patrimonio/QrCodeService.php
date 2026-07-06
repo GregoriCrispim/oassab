@@ -8,7 +8,9 @@ use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel;
 use Endroid\QrCode\Writer\SvgWriter;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class QrCodeService
 {
@@ -56,18 +58,52 @@ class QrCodeService
         return $this->fileStorage->storeQrCode($image['content'], $codigoInventario);
     }
 
+    /**
+     * Grava o QR code em disco sem lançar exceção. Em hospedagem compartilhada
+     * (ex.: HostGator) a escrita pode falhar por permissão; nesse caso o QR
+     * continua sendo servido dinamicamente pela rota `patrimonios.patrimonios.qrcode`.
+     */
+    public function storeSafely(Patrimonio $patrimonio, string $codigoInventario, int $size = self::DEFAULT_SIZE): bool
+    {
+        try {
+            $this->store($patrimonio, $codigoInventario, $size);
+
+            return true;
+        } catch (Throwable $e) {
+            Log::warning('Falha ao gravar QR code em disco; usando geração dinâmica.', [
+                'patrimonio_id' => $patrimonio->id,
+                'codigo' => $codigoInventario,
+                'erro' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
     public function publicPath(string $codigoInventario): string
     {
         return '/storage/'.$this->fileStorage->qrCodeRelativePath($codigoInventario);
     }
 
-    /** @return array<string, string> */
+    public function dynamicUrl(Patrimonio $patrimonio, string $codigoInventario): string
+    {
+        return route('patrimonios.patrimonios.qrcode', [$patrimonio, 'codigo' => $codigoInventario]);
+    }
+
+    /**
+     * Retorna a melhor URL para cada código: o arquivo estático quando existir,
+     * ou a rota de geração dinâmica como fallback (sempre disponível).
+     *
+     * @return array<string, string>
+     */
     public function pathsForPatrimonio(Patrimonio $patrimonio): array
     {
         $paths = [];
 
         foreach ($patrimonio->todosCodigosInventario() as $codigo) {
-            $paths[$codigo] = $this->publicPath($codigo);
+            $paths[$codigo] = $this->fileStorage->qrCodeExists($codigo)
+                ? $this->publicPath($codigo)
+                : $this->dynamicUrl($patrimonio, $codigo);
         }
 
         return $paths;
@@ -75,15 +111,22 @@ class QrCodeService
 
     public function syncForPatrimonio(Patrimonio $patrimonio): void
     {
-        $patrimonio->refresh();
-        $codigos = $patrimonio->todosCodigosInventario();
+        try {
+            $patrimonio->refresh();
+            $codigos = $patrimonio->todosCodigosInventario();
 
-        foreach ($codigos as $codigo) {
-            $this->store($patrimonio, $codigo);
-            $this->fileStorage->deleteLegacyGroupedQrCode($patrimonio, $codigo);
+            foreach ($codigos as $codigo) {
+                $this->storeSafely($patrimonio, $codigo);
+                $this->fileStorage->deleteLegacyGroupedQrCode($patrimonio, $codigo);
+            }
+
+            $this->cleanupLegacyGroupedFolder($patrimonio, $codigos);
+        } catch (Throwable $e) {
+            Log::warning('Falha ao sincronizar QR codes do patrimônio; seguindo com geração dinâmica.', [
+                'patrimonio_id' => $patrimonio->id,
+                'erro' => $e->getMessage(),
+            ]);
         }
-
-        $this->cleanupLegacyGroupedFolder($patrimonio, $codigos);
     }
 
     public function syncAll(): int
@@ -102,13 +145,17 @@ class QrCodeService
 
     public function storedContent(string $codigoInventario): ?string
     {
-        $relative = $this->fileStorage->qrCodeRelativePath($codigoInventario);
+        try {
+            $relative = $this->fileStorage->qrCodeRelativePath($codigoInventario);
 
-        if (! Storage::disk('public')->exists($relative)) {
+            if (! Storage::disk('public')->exists($relative)) {
+                return null;
+            }
+
+            return Storage::disk('public')->get($relative);
+        } catch (Throwable) {
             return null;
         }
-
-        return Storage::disk('public')->get($relative);
     }
 
     public function deleteForCodigo(string $codigoInventario): void

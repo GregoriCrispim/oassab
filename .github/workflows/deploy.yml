@@ -48,6 +48,20 @@ jobs:
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
+      # Gera os QR codes dos patrimônios existentes para envio estático (como os editais).
+      # Patrimônios criados após o deploy usam a geração dinâmica na rota de QR code.
+      - name: Generate patrimonio QR codes (production database)
+        continue-on-error: true
+        run: php artisan patrimonios:sync-qrcodes
+        env:
+          APP_KEY: ${{ secrets.APP_KEY }}
+          DB_CONNECTION: mysql
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_DATABASE: ${{ secrets.DB_DATABASE }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
       - name: Sync files via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:

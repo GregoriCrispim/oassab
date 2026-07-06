@@ -245,6 +245,46 @@ class PatrimonioSystemTest extends TestCase
             ->assertSee('Conjunto');
     }
 
+    public function test_qrcodes_data_does_not_500_when_disk_is_not_writable(): void
+    {
+        $categoria = PatrimonioCategoria::query()->first();
+
+        $patrimonio = Patrimonio::query()->create([
+            'codigo' => 'PAT-500',
+            'quantidade' => 1,
+            'nome' => 'Item hospedagem só leitura',
+            'valor_aquisicao' => 100,
+            'indice_depreciacao' => 10,
+            'valor_depreciado' => 0,
+            'valor_atual' => 100,
+            'data_aquisicao' => now(),
+            'patrimonio_categoria_id' => $categoria->id,
+            'ativo' => true,
+            'created_by' => $this->admin->id,
+        ]);
+
+        $mock = $this->mock(\App\Services\Patrimonio\PatrimonioFileStorage::class);
+        $mock->shouldReceive('storeQrCode')->andThrow(new \RuntimeException('read-only filesystem'));
+        $mock->shouldReceive('qrCodeExists')->andReturnFalse();
+        $mock->shouldReceive('deleteLegacyGroupedQrCode');
+        $mock->shouldReceive('qrCodeRelativePath')
+            ->andReturnUsing(fn (string $codigo) => 'patrimonios/'.$codigo.'/qrcodes/'.$codigo.'.svg');
+
+        $expectedDynamic = route('patrimonios.patrimonios.qrcode', [$patrimonio, 'codigo' => $patrimonio->codigo]);
+
+        $response = $this->actingAs($this->admin)
+            ->getJson(route('patrimonios.patrimonios.qrcodes.data', $patrimonio))
+            ->assertOk();
+
+        $qrcodes = $response->json('qrcodes');
+        $this->assertSame($expectedDynamic, $qrcodes[$patrimonio->codigo]);
+
+        $this->actingAs($this->admin)
+            ->get($qrcodes[$patrimonio->codigo])
+            ->assertOk()
+            ->assertHeader('Content-Type', 'image/svg+xml');
+    }
+
     public function test_reports_are_available_for_admin(): void
     {
         $this->actingAs($this->admin)

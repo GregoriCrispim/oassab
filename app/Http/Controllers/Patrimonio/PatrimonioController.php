@@ -319,8 +319,7 @@ class PatrimonioController extends Controller
         if ($size === QrCodeService::DEFAULT_SIZE) {
             $content = $this->qrCodeService->storedContent($codigo);
 
-            if ($content === null) {
-                $this->qrCodeService->store($patrimonio, $codigo);
+            if ($content === null && $this->qrCodeService->storeSafely($patrimonio, $codigo)) {
                 $content = $this->qrCodeService->storedContent($codigo);
             }
 
