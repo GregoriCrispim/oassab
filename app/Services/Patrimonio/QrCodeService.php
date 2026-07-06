@@ -23,13 +23,11 @@ class QrCodeService
     public function dataForPatrimonio(Patrimonio $patrimonio, ?string $codigoInventario = null): string
     {
         $codigo = $codigoInventario ?? $patrimonio->codigo;
-        $unidade = $patrimonio->dadosUnidadeParaCodigo($codigo);
 
         return json_encode([
             'id' => $patrimonio->id,
             'codigo' => $codigo,
             'nome' => $patrimonio->nome,
-            'descricao' => $unidade['descricao'],
             'url' => $patrimonio->urlParaCodigo($codigo),
         ], JSON_UNESCAPED_UNICODE);
     }

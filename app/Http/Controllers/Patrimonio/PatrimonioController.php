@@ -365,12 +365,35 @@ class PatrimonioController extends Controller
             }
         }
 
-        $image = $this->qrCodeService->generate($patrimonio, $codigo, $size);
+        try {
+            $image = $this->qrCodeService->generate($patrimonio, $codigo, $size);
+            $svg = $image['content'];
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Falha ao gerar QR code.', [
+                'patrimonio_id' => $patrimonio->id,
+                'codigo' => $codigo,
+                'erro' => $e->getMessage(),
+            ]);
+            $svg = $this->qrCodePlaceholderSvg($codigo, $size);
+        }
 
-        return response($image['content'], 200, [
-            'Content-Type' => $image['mime'],
+        return response($svg, 200, [
+            'Content-Type' => 'image/svg+xml',
             'Content-Disposition' => 'inline; filename="qrcode-'.$codigo.'.svg"',
         ]);
+    }
+
+    private function qrCodePlaceholderSvg(string $codigo, int $size): string
+    {
+        $codigo = htmlspecialchars($codigo, ENT_QUOTES);
+
+        return <<<SVG
+        <svg xmlns="http://www.w3.org/2000/svg" width="{$size}" height="{$size}" viewBox="0 0 {$size} {$size}">
+            <rect width="100%" height="100%" fill="#ffffff" stroke="#e2b4b4"/>
+            <text x="50%" y="46%" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#1f2754">{$codigo}</text>
+            <text x="50%" y="58%" font-family="sans-serif" font-size="10" text-anchor="middle" fill="#c0392b">QR indisponível</text>
+        </svg>
+        SVG;
     }
 
     private function syncCamposCustomizados(Patrimonio $patrimonio, array $campos): void
