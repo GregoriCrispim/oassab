@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             PostsSeeder::class,
             EditalInternoOassab2026Seeder::class,
             EditalInternoOassab2Seeder::class,
+            TransparencyDocumentsSeeder::class,
             AdminUserSeeder::class,
             PatrimonioCategoriasSeeder::class,
         ]);
